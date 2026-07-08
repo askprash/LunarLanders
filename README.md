@@ -1,5 +1,7 @@
 # Lunar Landers
 
+> **Prototype status:** This repository is under active development. It is a research/demo tool for exploring source-cited lunar-lander failure memory and review-readiness questions. It does **not** certify designs, determine flight readiness, or replace qualified mission-assurance review.
+
 Small research/demo tool for reviewing a lunar lander descent design against a structured record of past lunar landing failures.
 
 The repository has two main pieces:
