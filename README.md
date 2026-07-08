@@ -6,6 +6,7 @@ The repository has two main pieces:
 
 - `data/failure_kb.json`: a hand-built, cited failure-memory dataset covering robotic lunar soft-landing attempts from Chang'e 3 through Hakuto-R Mission 2.
 - `redteam.py` and `lunar_redteam_demo.html`: a CLI and browser UI that compare a design text or ConOps excerpt against reusable failure patterns drawn from that dataset.
+- `examples/`: public lunar descent-design test cases used as a regression corpus for comparing keyword mode against semantic review.
 
 ## What It Does
 
@@ -44,6 +45,7 @@ The code is explicit about the intended tradeoff:
   - browse the failure record
   - inspect how the pipeline works
 - `data/failure_kb.json`: mission records, reusable design checks, and built-in example design texts
+- `examples/`: six public ConOps/design texts used to stress the matcher on realistic prose
 - `.gitignore`: Python cache exclusions
 
 ## Quick Start
@@ -53,6 +55,7 @@ No third-party Python packages are required.
 ```bash
 python3 redteam.py
 python3 redteam.py design.txt
+python3 redteam.py examples/teamindus_arxiv.txt
 python3 redteam.py design.txt --agent
 python3 redteam.py design.txt --llm
 ```
@@ -92,6 +95,18 @@ The emphasis is on reusable engineering lessons rather than generic summaries of
 
 This repository is not just a landing-history dataset. It is a red-team review tool for lunar descent GNC designs, built to compare transparent rule-based matching against a more careful LLM analyst.
 
+## Examples Corpus
+
+The `examples/` directory contains six genuinely public lunar-lander descent and landing design texts. They are useful because they are not written to match the tool's keywords; they are realistic prose inputs for regression testing.
+
+This corpus is mainly there to expose the limitations of the offline matcher:
+
+- false positives from literal keyword matches
+- false mitigations where a sensor mention is mistaken for redundancy
+- missed findings when the document uses different vocabulary than the built-in examples
+
+For real design-review text, these files are the best demonstration of why `--agent` is the intended mode.
+
 ## Current State
 
 This is a coherent prototype with a clear research/demo shape:
@@ -99,4 +114,4 @@ This is a coherent prototype with a clear research/demo shape:
 - the knowledge base is already substantial and citation-driven
 - the Python script contains both the deterministic matcher and the LLM/agent pipeline
 - the HTML UI is polished enough for interactive demos
-- the project already contains built-in example design texts for demos and regression checks
+- the project contains both built-in examples and a separate public regression corpus under `examples/`
