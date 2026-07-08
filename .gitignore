@@ -1,4 +1,12 @@
-# Ignore sandboxed research files
+# Scratch and research notes that should never be committed by default
 sandbox/
+
+# OS / Python cache
 .DS_Store
 __pycache__/
+*.py[cod]
+
+# Common local tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
