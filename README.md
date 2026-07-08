@@ -12,7 +12,7 @@ The repository has two main pieces:
 
 ## What It Does
 
-You paste a descent or landing design description and the tool highlights historically recurring risk patterns such as:
+You paste a descent or landing design description and the tool reports historically recurring risk patterns such as:
 
 - single-string terminal ranging
 - outlier rejection without terrain awareness
@@ -56,7 +56,7 @@ The code is explicit about the intended tradeoff:
   - browse the failure record
   - inspect how the pipeline works
 - `data/failure_kb.json`: mission records and reusable design checks
-- `examples/`: six public ConOps/design texts used to stress the matcher on realistic prose
+- `examples/`: six public ConOps/design texts that stress the matcher on realistic prose
 - `architecture_walkthrough.html`: standalone interactive architecture walkthrough for expert onboarding
 - `.github/workflows/pages.yml`: GitHub Pages publishing workflow for the walkthrough and demo
 - `docs/methods/stpa-cast.md`: project framing for STPA/CAST usage
@@ -66,7 +66,7 @@ The code is explicit about the intended tradeoff:
 
 ## Quick Start
 
-This repository uses [`uv`](https://docs.astral.sh/uv/) for Python environment management. No third-party Python packages are required today, but using `uv` keeps the Python version and lockfile workflow consistent for collaborators.
+This repository uses [`uv`](https://docs.astral.sh/uv/) for Python environment management. The code has no third-party Python package dependencies today, but `uv` keeps the Python version and lockfile workflow consistent for collaborators.
 
 Install `uv` if needed:
 
@@ -100,7 +100,7 @@ Then open `http://127.0.0.1:8787/`.
 
 ## Development Notes
 
-This repository uses [Backlog.md](https://github.com/MrLesk/Backlog.md) for task tracking. Before planning or changing non-trivial work, run:
+This repository uses [Backlog.md](https://github.com/MrLesk/Backlog.md) for task tracking. Before planning or changing substantive work, run:
 
 ```bash
 backlog instructions overview
@@ -185,19 +185,19 @@ Local `.env` files are ignored by `.gitignore`, but shell environment variables 
 - mission records with dates, subsystem, proximate cause, generalizable weakness, source URL, confidence, and tags
 - reusable design checks with severity, diagnostic question, keyword signals, precedent missions, and recommended mitigations
 
-The emphasis is on reusable engineering lessons rather than generic summaries of lunar missions.
+The emphasis is on reusable engineering lessons instead of generic summaries of lunar missions.
 
-This repository is not just a landing-history dataset. It is a red-team review tool for lunar descent GNC designs, built to compare transparent rule-based matching against a more careful LLM analyst.
+This repository is more than a landing-history dataset. It is a red-team review tool for lunar descent GNC designs, built to compare transparent rule-based matching against a more careful LLM analyst.
 
 ## Audience Sequence
 
-The next phase should start as an academic/domain-expert validation effort: test whether the corpus, CAST/STPA framing, hindcast logic, source quality, and review-gate evidence model are credible. Startup engineering teams and technical diligence reviewers are important later audiences, but the method should be validated before it is presented as an operational startup workflow.
+The next phase should start as an academic/domain-expert validation effort: test whether the corpus, CAST/STPA framing, hindcast logic, source quality, and review evidence model are credible. Startup engineering teams and technical diligence reviewers are important later audiences, but the method should be validated before it is presented as an operational startup workflow.
 
 Central claim: a source-cited lunar-lander failure memory, structured with CAST/STPA, can generate review-readiness questions that would have surfaced recurring failure classes before later missions repeated them. Those questions must be **precedent-backed**: they should point to past occurrences so reviewers can see why a particular ConOps feature is potentially problematic.
 
 See `docs/adr/0004-start-with-academic-validation-before-startup-use.md`, `docs/research/central-claim.md`, and `docs/research/proposed-domain-expert-review-workflow.md`. The expert-review workflow is only a suggested handoff scaffold; domain experts should change it as needed.
 
-For a concise domain-expert starting point, use `docs/research/expert-handoff-packet.md` rather than asking reviewers to inspect the whole repo. The interactive architecture walkthrough is a standalone static HTML page published by GitHub Actions; see `architecture_walkthrough.html` and `docs/adr/0009-publish-architecture-walkthrough-as-standalone-html.md`.
+For a concise domain-expert starting point, use `docs/research/expert-handoff-packet.md` instead of asking reviewers to inspect the whole repo. The interactive architecture walkthrough is a standalone static HTML page published by GitHub Actions; see `architecture_walkthrough.html` and `docs/adr/0009-publish-architecture-walkthrough-as-standalone-html.md`.
 
 ## Review Pipeline Direction
 
@@ -211,7 +211,7 @@ See `docs/architecture/review-pipeline.md` and `docs/adr/0005-use-deterministic-
 
 ## Examples Corpus
 
-The `examples/` directory contains six genuinely public lunar-lander descent and landing design texts. They are useful because they are not written to match the tool's keywords; they are realistic prose inputs for regression testing.
+The `examples/` directory contains six public lunar-lander descent and landing design texts. They are useful because they are not written to match the tool's keywords; they are realistic prose inputs for regression testing.
 
 This corpus is mainly there to expose the limitations of the offline matcher:
 
