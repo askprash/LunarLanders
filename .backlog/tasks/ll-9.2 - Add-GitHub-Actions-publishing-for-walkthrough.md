@@ -1,11 +1,11 @@
 ---
 id: LL-9.2
 title: Add GitHub Actions publishing for walkthrough
-status: Done
+status: In Progress
 assignee:
   - '@pi'
 created_date: '2026-07-08 15:19'
-updated_date: '2026-07-08 15:52'
+updated_date: '2026-07-08 15:54'
 labels:
   - github-actions
   - documentation
@@ -42,6 +42,8 @@ Add a GitHub Actions workflow that builds or publishes the standalone walkthroug
 
 <!-- SECTION:NOTES:BEGIN -->
 Added .github/workflows/pages.yml using configure-pages, upload-pages-artifact, and deploy-pages. The workflow runs on push to main and workflow_dispatch, builds _site/index.html from architecture_walkthrough.html, and publishes lunar_redteam_demo.html as demo.html. README and expert handoff packet document the Pages URL pattern. Validation: workflow contains deploy-pages; python3 redteam.py smoke test passed.
+
+GitHub Actions deployment failed because Pages is not enabled/configured for GitHub Actions. gh run 28956455861 failed in actions/configure-pages@v5: Get Pages site failed / Not Found; configure-pages logged enablement: false.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
