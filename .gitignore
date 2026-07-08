@@ -1,0 +1,4 @@
+# Ignore sandboxed research files
+sandbox/
+.DS_Store
+__pycache__/

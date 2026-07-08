@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Lunar lander descent-design review</title>
+<style>
+  :root{
+    --ink:#1c1e21; --muted:#6b7079; --faint:#9aa0a8; --line:#e6e7ea; --line2:#d8dade;
+    --bg:#ffffff; --panel:#ffffff; --soft:#f7f8f9;
+    --accent:#3257a8; --accentsoft:#eef2f9;
+    --s5:#b0322a; --s4:#9a6512; --s3:#7d6a16; --pass:#2f7a4f; --passbg:#f1f8f3;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+  header{border-bottom:1px solid var(--line);padding:30px 0 18px}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em}
+  header p{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:680px}
+  nav{display:flex;gap:26px;border-bottom:1px solid var(--line);margin-top:18px}
+  nav button{background:none;border:0;padding:0 0 12px;margin-top:6px;font-size:14px;color:var(--muted);
+    cursor:pointer;border-bottom:2px solid transparent;font-family:var(--sans)}
+  nav button:hover{color:var(--ink)}
+  nav button.active{color:var(--ink);border-bottom-color:var(--ink)}
+  main{padding:26px 0 80px}
+  .panel{display:none}.panel.active{display:block}
+  h2{font-size:16px;font-weight:600;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 18px;max-width:680px}
+  label.fld{display:block;font-size:11.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.07em;margin:0 0 6px}
+  select,textarea,input{font-family:var(--sans);font-size:14px;color:var(--ink);border:1px solid var(--line2);border-radius:6px;background:#fff}
+  select{padding:8px 10px}
+  input[type=text],input[type=password]{padding:8px 10px}
+  textarea{width:100%;min-height:220px;padding:12px 13px;resize:vertical;line-height:1.6;font-size:13.5px;color:#2a2d31}
+  .seg{display:inline-flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden}
+  .seg button{background:#fff;border:0;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--muted);font-family:var(--sans)}
+  .seg button.on{background:var(--ink);color:#fff}
+  .btn{background:var(--ink);color:#fff;border:0;border-radius:6px;padding:9px 16px;font-size:13.5px;cursor:pointer}
+  .btn:hover{background:#000}
+  .btn:disabled{opacity:.65;cursor:wait;background:#333}
+  .btn.sec{background:#fff;color:var(--ink);border:1px solid var(--line2)}
+  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+  .note{color:var(--faint);font-size:12.5px}
+  .cfg{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:14px;margin:14px 0 0}
+  .cfg .row{align-items:flex-end}
+  .verdict{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:6px}
+  .verdict .band{font-size:18px;font-weight:600}
+  .verdict .meta{color:var(--muted);font-size:13px}
+  .b-high{color:var(--s5)} .b-elev{color:var(--s4)} .b-rev{color:var(--s3)} .b-low{color:var(--pass)}
+  .flag{border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:7px;padding:13px 15px;margin:13px 0}
+  .flag.s5{border-left-color:var(--s5)} .flag.s4{border-left-color:var(--s4)} .flag.s3{border-left-color:var(--s3)}
+  .flag.part{border-left-color:var(--faint)}
+  .flag .h{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+  .flag .name{font-weight:600;font-size:14.5px}
+  .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--muted);white-space:nowrap;padding-top:2px}
+  .flag .q{color:var(--muted);font-size:13px;margin:5px 0 0}
+  .ev{font-size:13px;color:#33363a;background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:8px 10px;margin:9px 0 0}
+  .ev mark{background:#fdeeb3;padding:0 2px;border-radius:2px}
+  .ev .why{display:block;color:var(--muted);margin-top:5px;font-size:12.5px}
+  .prec{font-size:12.5px;color:#3a3d41;margin:5px 0 0;padding-left:12px;border-left:1px solid var(--line2)}
+  .prec a{color:var(--accent);text-decoration:none}.prec a:hover{text-decoration:underline}
+  .rec{font-size:13px;margin:9px 0 0;color:#2c2f33}
+  .rec b{font-weight:600}
+  .passes{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+  .passrow{font-size:13px;color:var(--pass);margin:5px 0}
+  .ctx{background:var(--accentsoft,#eef2f9);border:1px solid #d9e2f1;border-radius:7px;padding:12px 14px;margin-top:16px;font-size:13px;color:#2f3b54}
+  .err{background:#fbeceb;border:1px solid #f0c7c3;color:#8a2b23;border-radius:7px;padding:11px 13px;font-size:13.5px;margin-top:14px}
+  .busy{display:none;align-items:center;gap:9px;background:#f6f8fc;border:1px solid #dbe3f1;color:#2f3b54;border-radius:7px;padding:9px 12px;font-size:13px;margin-top:12px}
+  .spinner{width:14px;height:14px;border:2px solid #c7d2e5;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;flex:0 0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .summary-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:13px 0 18px}
+  .summary-tile{border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px 12px}
+  .summary-tile .num{display:block;font-size:20px;font-weight:650;line-height:1.1}.summary-tile .txt{color:var(--muted);font-size:12px}
+  .result-group{margin-top:20px}.group-title{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;font-weight:650;color:#2c2f33}.group-title .count{font-family:var(--mono);font-size:10.5px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 7px;background:var(--soft)}
+  .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:13px;align-items:start}
+  .result-card{border:1px solid var(--line);border-radius:9px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.025)}
+  .result-card.flagged{border-top:3px solid var(--s5)}.result-card.partial{border-top:3px solid var(--faint)}.result-card.pass{border-top:3px solid var(--pass)}
+  .sevbar{height:6px;background:#eef0f3}.sevbar span{display:block;height:100%;border-radius:0 3px 3px 0}.sevbar .s5{background:var(--s5)}.sevbar .s4{background:var(--s4)}.sevbar .s3{background:var(--s3)}.sevbar .ok{background:var(--pass)}
+  .card-body{padding:13px 14px}.card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.card-title{font-weight:650;font-size:14.5px;line-height:1.3}.badges{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.badge{font-family:var(--mono);font-size:10px;letter-spacing:.03em;border-radius:999px;padding:2px 7px;border:1px solid var(--line2);background:var(--soft);white-space:nowrap}.badge.sev5{color:var(--s5);border-color:#e7c4c1;background:#fbf3f2}.badge.sev4{color:var(--s4);border-color:#e7d7bb;background:#fbf6ec}.badge.sev3{color:var(--s3);border-color:#e2dcc0;background:#fbf9ec}.badge.conf-high{color:var(--pass);border-color:#c8e3d2;background:#f3f9f5}.badge.conf-medium{color:var(--s4);border-color:#e7d7bb;background:#fbf6ec}.badge.conf-low{color:var(--s5);border-color:#e7c4c1;background:#fbf3f2}.badge.pass{color:var(--pass);border-color:#c8e3d2;background:#f3f9f5}
+  .card-q{color:var(--muted);font-size:12.8px;margin:7px 0 0}.card-ev{font-size:13px;color:#33363a;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:10px 0 0}.card-ev .why{display:block;color:var(--muted);margin-top:7px;font-size:12.5px}.occ{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}.occ summary{cursor:pointer;color:var(--accent);font-size:12.5px}.occ summary:hover{text-decoration:underline}
+  .flow-label{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:18px 0 8px}.flow-label span{font-size:13px;font-weight:650;color:#2c2f33}.flow-label small{font-size:12px;color:var(--muted)}
+  .schema-flow{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin:0 0 22px;padding:18px;border:1px solid #d9e2f1;border-radius:15px;background:linear-gradient(180deg,#fbfcff 0%,#f5f7fb 100%);box-shadow:0 8px 24px rgba(50,87,168,.06)}
+  .schema-flow:before{content:"";position:absolute;left:42px;right:42px;top:50px;height:2px;background:linear-gradient(90deg,#d9e2f1,#b9c8e8,#d9e2f1)}
+  .flow-card{position:relative;z-index:1;border:1px solid #dfe5f1;border-radius:12px;background:rgba(255,255,255,.94);padding:14px 13px 13px;box-shadow:0 2px 10px rgba(28,30,33,.04);transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+  .flow-card:hover{transform:translateY(-1px);border-color:#c9d5ea;box-shadow:0 6px 18px rgba(50,87,168,.10)}
+  .flow-card:not(:last-child)::after{content:"→";position:absolute;right:-13px;top:28px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #d9e2f1;color:var(--accent);font-weight:700;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  .flow-num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-family:var(--mono);font-size:10.5px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--accent),#6f86c8);box-shadow:0 3px 8px rgba(50,87,168,.20);letter-spacing:.02em}
+  .flow-card b{display:block;margin-top:10px;font-size:13.5px;line-height:1.25}.flow-card p{font-size:12.5px;color:var(--muted);margin:6px 0 0;line-height:1.45}
+  @media (max-width:820px){.schema-flow{grid-template-columns:1fr;padding:14px}.schema-flow:before{left:29px;right:auto;top:28px;bottom:28px;width:2px;height:auto;background:linear-gradient(180deg,#d9e2f1,#b9c8e8,#d9e2f1)}.flow-card{padding-left:48px}.flow-num{position:absolute;left:12px;top:12px}.flow-card:not(:last-child)::after{content:"↓";right:auto;left:20px;top:auto;bottom:-18px}}
+  .schema-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0}.schema-card{border:1px solid var(--line);border-radius:8px;background:var(--soft);padding:11px}.schema-card b{font-size:13px}.schema-card code{display:block;white-space:normal;margin-top:7px;line-height:1.55;background:#fff}
+  /* failure record */
+  .filters{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .mcard{border:1px solid var(--line);border-radius:7px;padding:13px 15px;margin:11px 0}
+  .mcard .mh{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .mcard .mn{font-weight:600;font-size:14.5px}
+  .mcard .when{color:var(--faint);font-size:12.5px;font-weight:400}
+  .oc{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;padding:2px 7px;border-radius:4px;border:1px solid;white-space:nowrap}
+  .oc.bad{color:var(--s5);border-color:#e7c4c1;background:#fbf3f2}
+  .oc.part{color:var(--s4);border-color:#e7d7bb;background:#fbf6ec}
+  .oc.ok{color:var(--pass);border-color:#c8e3d2;background:#f3f9f5}
+  .kv{font-size:13px;margin:6px 0 0;color:#34373b}
+  .kv b{font-weight:600;color:#1c1e21}
+  .quote{font-size:12.5px;color:var(--muted);font-style:italic;margin:7px 0 0}
+  .src{font-size:12px;margin-top:7px}
+  .src a{color:var(--accent);text-decoration:none}.src a:hover{text-decoration:underline}
+  .tags{margin-top:7px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;color:var(--muted);background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin:2px 4px 0 0}
+  /* how it works */
+  .doc p{margin:0 0 12px;font-size:14px}
+  .doc h3{font-size:13.5px;font-weight:600;margin:20px 0 7px}
+  .doc code{font-family:var(--mono);font-size:12.5px;background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .doc .step{font-size:13.5px;color:#2c2f33;margin:7px 0;padding-left:14px;border-left:2px solid var(--line2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Lunar lander descent-design review</h1>
+  <p>Check a descent and landing design against a structured record of past lunar-lander guidance, navigation and control failures.</p>
+  <nav>
+    <button data-tab="review" class="active">Review a design</button>
+    <button data-tab="record">Failure record</button>
+    <button data-tab="about">How it works</button>
+  </nav>
+</header>
+<main>
+
+<!-- ===================== REVIEW ===================== -->
+<section class="panel active" id="review">
+  <h2>Review a design</h2>
+  <p class="sub">Paste a descent/landing design or concept of operations, or load an example. The review returns the historical failure modes the design appears exposed to, each with the missions where it occurred and a suggested mitigation.</p>
+
+  <div class="row" style="justify-content:space-between;margin-bottom:14px">
+    <div>
+      <label class="fld">Matching mode</label>
+      <div class="seg" id="modeSeg">
+        <button data-mode="demo" class="on">Demo &middot; offline keyword</button>
+        <button data-mode="live">LLM &middot; single pass</button>
+        <button data-mode="agent">Agent &middot; LLM analyst</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cfg" id="liveCfg" style="display:none">
+    <div class="row">
+      <div style="min-width:170px">
+        <label class="fld" for="provider">Provider</label>
+        <select id="provider" style="width:100%">
+          <option value="local">Local server (env key)</option>
+          <option value="anthropic">Anthropic</option>
+          <option value="parley">MIT Parley</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:240px">
+        <label class="fld" for="apikey" id="apiKeyLabel">Anthropic API key</label>
+        <input type="password" id="apikey" placeholder="sk-ant-..." style="width:100%"/>
+      </div>
+      <div style="min-width:260px;flex:1">
+        <label class="fld" for="modelPreset">Model</label>
+        <select id="modelPreset" style="width:100%"></select>
+        <input type="text" id="model" value="" placeholder="custom model id" style="width:100%;margin-top:7px;display:none"/>
+      </div>
+    </div>
+    <div class="note" style="margin-top:9px">LLM modes read the design for meaning instead of matching keywords. Agent mode runs three lightweight passes (extract facts &rarr; draft findings &rarr; audit false positives/false mitigations) and is the recommended mode for real ConOps. For best security, run <code>python3 redteam.py --serve --provider parley</code> and use <b>Local server</b>; the key stays in the Python process. Direct browser provider calls are still available, but require pasting a key into this page.</div>
+  </div>
+
+  <div class="row" style="margin:16px 0 10px">
+    <div style="flex:1;min-width:260px">
+      <label class="fld" for="example">Load example</label>
+      <select id="example" style="width:100%">
+        <option value="resilience">Commercial lander &mdash; terminal-descent ConOps</option>
+        <option value="apollo">Apollo LM landing radar (NASA TN D-6849)</option>
+        <option value="robust">Hardened descent design</option>
+        <option value="blank">Blank &mdash; paste your own</option>
+      </select>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="btn" id="runBtn">Run review</button>
+      <button class="btn sec" id="clearBtn" type="button">Clear output</button>
+    </div>
+  </div>
+  <label class="fld" for="doc">Design text</label>
+  <textarea id="doc" spellcheck="false"></textarea>
+  <div class="note" id="srcNote" style="margin-top:7px"></div>
+  <div class="busy" id="busy"><span class="spinner"></span><span id="busyText">Processing…</span></div>
+  <div id="results" style="margin-top:20px"></div>
+</section>
+
+<!-- ===================== RECORD ===================== -->
+<section class="panel" id="record">
+  <h2>Failure record</h2>
+  <p class="sub">Modern robotic soft-landing attempts, each normalized to a common schema: flight phase, subsystem, the proximate cause, the generalizable weakness, a sourced quote, and a confidence level. This is the record the review matches against.</p>
+  <div class="filters">
+    <div><label class="fld" for="fOut">Outcome</label>
+      <select id="fOut"><option value="">All</option><option>SUCCESS</option><option>TIPPED_SURVIVED</option><option>TIPPED_LOST</option><option>LOST</option><option>NO_LANDING_ATTEMPT</option></select></div>
+    <div><label class="fld" for="fSub">Subsystem</label>
+      <select id="fSub"><option value="">All</option><option>GNC</option><option>propulsion</option><option>sensor</option><option>software</option><option>avionics</option></select></div>
+    <div><label class="fld" for="fTag">Tag</label>
+      <input type="text" id="fTag" placeholder="e.g. altimetry"/></div>
+  </div>
+  <div id="recList"></div>
+</section>
+
+<!-- ===================== ABOUT ===================== -->
+<section class="panel" id="about">
+  <h2>How it works</h2>
+  <div class="doc" style="max-width:860px">
+    <p>There are two parts: the <b>failure record</b> and the <b>review engine</b>. The record stores what went wrong before; the engine compares a new ConOps against those reusable failure patterns.</p>
+
+    <div class="flow-label"><span>Review pipeline</span><small>Traceable evidence → structured JSON → review cards</small></div>
+    <div class="schema-flow" aria-label="Review pipeline flowchart">
+      <div class="flow-card"><span class="flow-num">01</span><b>Source evidence</b><p>Public mishap reports, agency releases, and post-flight statements are reduced to traceable records.</p></div>
+      <div class="flow-card"><span class="flow-num">02</span><b>Failure memory</b><p>Each mission becomes a normalized schema with phase, subsystem, proximate cause, weakness, quote, source, and confidence.</p></div>
+      <div class="flow-card"><span class="flow-num">03</span><b>Design checks</b><p>Generalized failure modes ask diagnostic questions and link to precedent missions plus mitigations.</p></div>
+      <div class="flow-card"><span class="flow-num">04</span><b>Matcher / agent</b><p>Keyword mode matches terms. Agent mode extracts facts, drafts findings, and audits false positives.</p></div>
+      <div class="flow-card"><span class="flow-num">05</span><b>Structured findings</b><p>The model returns JSON: status, evidence, rationale, and confidence. The UI renders the cards.</p></div>
+    </div>
+
+    <h3>Stored schemas</h3>
+    <div class="schema-grid">
+      <div class="schema-card"><b>Mission failure record</b><code>{ flight_phase, subsystem, sensor_or_actuator, proximate_cause, design_smell, mitigation_pattern, key_quote, source_url, confidence }</code></div>
+      <div class="schema-card"><b>Reusable design check</b><code>{ id, name, question, severity, present_signals[], mitigation_signals[], precedents[], recommendation }</code></div>
+      <div class="schema-card"><b>LLM / agent finding</b><code>{ check_id, status: flag|partial|pass, evidence, rationale, confidence }</code></div>
+    </div>
+
+    <h3>Review modes</h3>
+    <div class="step"><b>Demo (offline keyword).</b> Transparent and deterministic, but literal: it matches words rather than meaning, so it can miss paraphrases or confuse a sensor mention with a mitigation.</div>
+    <div class="step"><b>LLM single pass.</b> Sends the design text and check list to a model, which returns structured JSON findings in one call.</div>
+    <div class="step"><b>Agent (recommended).</b> Runs three passes: extract supported design facts, draft findings against every failure mode, then audit for false positives/false mitigations. This is why the UI can render confidence, severity, evidence, precedents, and mitigations as separate elements.</div>
+    <p>Recommendations favor redundancy, dissimilar sensing, and graceful degradation over relying on a single string and making it more reliable.</p>
+    <h3>Limitations</h3>
+    <p>The record is small, so frequencies are reported as counts, not probabilities. Some causes rest on agency or company statements rather than full mishap reports; those carry a lower confidence level. The Demo matcher is a transparent placeholder for the LLM/Agent modes, not a substitute for them.</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ============================ DATA ============================ */
+const DATA = {
+  missions: [
+    {id:"change3",mission:"Chang'e 3",agency:"CNSA",date:"2013-12-14",outcome:"Success",outcome_class:"SUCCESS",
+     phase:"Autonomous powered descent; hover hazard-avoidance at ~100 m",subsystem:"GNC (nominal)",
+     sensor:"IMU + laser altimeter + microwave radar altimeter/velocimeter; 16-beam laser 3D imager; optical hazard camera",
+     proximate:"None — first lunar soft landing since 1976.",
+     smell:"Good practice: sensor diversity (inertial + laser + microwave radar), a dedicated hover-and-scan 3D terrain sensor, and autonomous hazard avoidance.",
+     ility:"Robustness + survivability margin",
+     quote:"Coarse optical hazard avoidance, then hover at ~100 m with a 16-beam laser 3D imaging sensor for fine obstacle detection.",
+     src:"eoPortal",url:"https://www.eoportal.org/satellite-missions/chang-e-3",conf:"HIGH",
+     tags:["success","redundancy_present","dissimilar_sensors","terrain_sensing","hazard_avoidance"]},
+    {id:"change4",mission:"Chang'e 4",agency:"CNSA",date:"2019-01-03",outcome:"Success",outcome_class:"SUCCESS",
+     phase:"Fully autonomous far-side descent; hover + hazard avoidance",subsystem:"GNC (nominal)",
+     sensor:"Inherited Chang'e-3 GNC stack; 7500 N throttleable engine",
+     proximate:"None — first far-side landing (Von Karman crater).",
+     smell:"Good practice: reuse of a flight-proven autonomous GNC stack (commonality); designed for full autonomy with no ground intervention.",
+     ility:"Robustness via commonality",
+     quote:"Descent was completely autonomous, reusing the Chang'e-3 hazard-detect-and-avoid and hover-imaging architecture.",
+     src:"eoPortal",url:"https://www.eoportal.org/satellite-missions/chang-e-4",conf:"HIGH",
+     tags:["success","commonality","autonomy","hazard_avoidance","redundancy_present"]},
+    {id:"beresheet",mission:"Beresheet",agency:"SpaceIL / IAI",date:"2019-04-11",outcome:"Crash",outcome_class:"LOST",
+     phase:"Powered descent / braking (~14 km)",subsystem:"GNC / avionics (flight-computer restart cascade)",
+     sensor:"IMU (one of two); main engine",
+     proximate:"An IMU failed at ~14 km. A ground command to restart it triggered a flight-computer reboot; during the reboot the active IMU feed was also lost, the computer read a navigation fault, and commanded a protective main-engine shutdown. Re-ignition could not recover altitude.",
+     smell:"A ground-commanded sensor-recovery action can trigger a computer reboot that shuts propulsion; no isolation between sensor management and the engine-control path; restart cascade never validated under combined hardware-failure + telecommand.",
+     ility:"Loss of survivability — a finite-duration disturbance was not contained and propagated to total loss.",
+     quote:"The command didn't directly cause the main engine to turn off, but rather caused the computer to restart and things carried on from there. — SpaceIL CEO Ido Anteby",
+     src:"Times of Israel",url:"https://www.timesofisrael.com/5-6-attempts-to-restart-israeli-moon-landers-engine-failed-investigation-finds/",conf:"MEDIUM-HIGH",
+     tags:["gnc","imu","software_logic","fault_management","ground_command_hazard","no_graceful_degradation"]},
+    {id:"chandrayaan2",mission:"Chandrayaan-2 Vikram",agency:"ISRO",date:"2019-09-06",outcome:"Crash",outcome_class:"LOST",
+     phase:"Fine braking / terminal descent (~2.1 km)",subsystem:"GNC / propulsion (braking thrusters)",
+     sensor:"Braking thrusters; fine-braking guidance software",
+     proximate:"Nominal to ~2.2 km, then a deviation at 2.1 km. Government statements attribute the crash to a braking-thruster problem during fine braking linked to a software glitch; contact lost at 2.1 km.",
+     smell:"Rough-to-fine braking phase transition not stress-tested in a flight-representative integrated environment; single-string guidance with no graceful degradation; limited dispersion tolerance.",
+     ility:"Loss of robustness — limited ability to handle parameter variation/dispersion.",
+     quote:"The Vikram craft hard landed on the moon because of a problem with its braking thrusters. — Indian Minister of State for the Dept. of Space",
+     src:"Space.com",url:"https://www.space.com/india-admits-moon-lander-crash.html",conf:"LOW-MEDIUM",
+     tags:["gnc","software_logic","propulsion","phase_transition","no_graceful_degradation","insufficient_testing"]},
+    {id:"change5",mission:"Chang'e 5",agency:"CNSA",date:"2020-12-01",outcome:"Success",outcome_class:"SUCCESS",
+     phase:"Autonomous descent + hover hazard avoidance; sample return",subsystem:"GNC (nominal)",
+     sensor:"L3DIS multi-beam lidar; added a Navigation Doppler Lidar for precision velocity/altitude",
+     proximate:"None — sample-return landing (~1.731 kg returned).",
+     smell:"Good practice: added sensor diversity beyond radar (a Doppler lidar, vibration/plume-tested pre-mission).",
+     ility:"Robustness via sensor diversity",
+     quote:"Chang'e-5 added a Navigation Doppler Lidar (flight/vibration/plume-tested) for precision velocity/altitude during descent.",
+     src:"MDPI Remote Sensing",url:"https://www.mdpi.com/2072-4292/16/23/4354",conf:"HIGH",
+     tags:["success","redundancy_present","dissimilar_sensors","doppler_lidar","pre_flight_qualification"]},
+    {id:"hakuto_r_m1",mission:"Hakuto-R Mission 1",agency:"ispace",date:"2023-04-25",outcome:"Crash",outcome_class:"LOST",
+     phase:"Terminal/vertical descent (final ~5 km)",subsystem:"GNC / software (altimetry outlier-rejection filter)",
+     sensor:"Laser rangefinder / radar altimeter; onboard altitude-estimation filter",
+     proximate:"Crossing the steep rim of Atlas crater (~3 km step), the laser altimeter correctly reported a large altitude increase. The outlier-rejection filter judged it anomalous and blocked the data; the internal estimate froze near zero while true altitude was ~5 km. The lander believed it had landed, descended slowly until propellant exhausted, then free-fell.",
+     smell:"Single-string altimetry with hard outlier rejection, no terrain-aware sanity model, and no fused fallback; post-CDR landing-site change without full re-simulation of the new terrain corridor.",
+     ility:"Loss of robustness — could not maintain valid state estimation under a foreseeable terrain disturbance.",
+     quote:"The onboard software determined in error that the cause of this discrepancy was an abnormal value reported by the sensor, and thereafter the altitude data measured by the sensor was intercepted. — ispace, May 26, 2023",
+     src:"ispace",url:"https://ispace-inc.com/news-en/?p=4691",conf:"HIGH",
+     tags:["gnc","altimetry","laser_rangefinder","outlier_rejection","single_string_sensor","no_dissimilar_redundancy","terrain_model_mismatch","software_logic","post_cdr_change"]},
+    {id:"luna25",mission:"Luna 25",agency:"Roscosmos",date:"2023-08-19",outcome:"Crash",outcome_class:"LOST",
+     phase:"Pre-landing orbit-correction burn",subsystem:"GNC / avionics; sensor (BIUS-L)",
+     sensor:"BIUS-L angular-velocity/accelerometer unit; main engine (burn timer)",
+     proximate:"The control complex failed to power on the BIUS-L accelerometer, so it received zero velocity feedback and could not detect when target delta-V was reached. The burn fell back to a fixed timer and fired ~127 s instead of ~84 s, over-shooting delta-V; the craft struck the Moon.",
+     smell:"Irreversible maneuver authorized with no verification that the primary feedback sensor is live; shared command array with priority ambiguity; timer-only fallback with no abort when feedback is absent.",
+     ility:"Loss of robustness/survivability — a latent command defect was not contained before an irreversible action.",
+     quote:"The on-board control complex received zero signals from the accelerometers of the BIUS-L device ... shutdown occurred according to a temporary setting. — Roscosmos, Oct 3, 2023",
+     src:"SpaceNews",url:"https://spacenews.com/russia-blames-luna-25-crash-on-computer-glitch/",conf:"HIGH",
+     tags:["gnc","accelerometer","software_logic","burn_cutoff_logic","no_sensor_liveness_check","open_loop_fallback"]},
+    {id:"slim",mission:"SLIM",agency:"JAXA",date:"2024-01-19",outcome:"Partial success (tipped, survived)",outcome_class:"TIPPED_SURVIVED",
+     phase:"Terminal descent / obstacle avoidance (~50 m)",subsystem:"Propulsion (main-engine nozzle structural failure)",
+     sensor:"One of two main engines (nozzle lost); attitude-control thrusters; autonomous GNC",
+     proximate:"At ~50 m a main-engine nozzle was lost, producing asymmetric thrust and ~9 m/s lateral velocity the attitude-control thrusters could not fully counter. The autonomous GNC detected the anomaly and continued on the remaining engine, but touchdown attitude was out of range; the lander tipped, solar panels facing west (later recovered when the Sun angle changed).",
+     smell:"A single nozzle structural failure can tip the lander despite a correct software response; attitude control not sized for the engine-out lateral transient; power tightly coupled to an upright pose.",
+     ility:"Strong survivability — a finite-duration disturbance degraded but did not destroy value delivery (pinpoint landing, data returned, later power recovery).",
+     quote:"SLIM onboard software autonomously identifies the anomaly, and while controlling the horizontal position as much as possible, SLIM continued the descent with the other engine. — JAXA, Jan 25, 2024",
+     src:"JAXA",url:"https://global.jaxa.jp/press/2024/01/20240125-1_e.html",conf:"HIGH",
+     tags:["propulsion","nozzle","engine_out","attitude_control","power_after_tipover","survivability_good","good_fault_response"]},
+    {id:"peregrine",mission:"Peregrine Mission 1",agency:"Astrobotic",date:"2024-01-08",outcome:"Failure (no landing attempted)",outcome_class:"NO_LANDING_ATTEMPT",
+     phase:"Post-separation propulsion commissioning",subsystem:"Propulsion (helium pressurization feed system)",
+     sensor:"Pressure Control Valve 2 (PCV2) in the oxidizer helium line; oxidizer tank",
+     proximate:"PCV2 failed to reseat (vibration-initiated relaxation of an internal threaded joint damaged the O-ring seat). Uncontrolled helium over-pressurized and ruptured the oxidizer tank; the leak tumbled the craft and depleted propellant, making landing impossible.",
+     smell:"Known valve risk item flown unresolved under schedule/test-invalidation pressure; inaccessible component prevented last-chance inspection/swap; single PCV per branch with no redundancy/isolation.",
+     ility:"Loss of robustness — a known latent defect was not contained; no redundancy at the valve.",
+     quote:"PCV2 suffered a loss-of-seal capability, most likely due to a mechanical failure caused by vibration-initiated relaxation between threaded components internal to the valve. — Astrobotic PM1 Post-Mission Report",
+     src:"Astrobotic PM1 Report",url:"https://www.astrobotic.com/wp-content/uploads/2024/08/PM1_Post-Mission-Report_2024-1.pdf",conf:"HIGH",
+     tags:["propulsion","valve","redundancy_missing","schedule_pressure_risk_acceptance","known_open_risk","no_isolation"]},
+    {id:"im1",mission:"IM-1 Odysseus (Nova-C)",agency:"Intuitive Machines",date:"2024-02-22",outcome:"Partial success (tipped)",outcome_class:"TIPPED_SURVIVED",
+     phase:"Terminal descent / final approach and touchdown",subsystem:"GNC / sensor (laser rangefinder safety switch) + software (NDL data-valid flag)",
+     sensor:"Laser rangefinders (primary, disabled); NASA NDL (backup); IMU + optical nav (final fallback)",
+     proximate:"An eye-safety interlock switch on the laser rangefinders was left armed and could not be disabled remotely, so they were dead in descent. A NDL workaround was improvised but a data-valid flag was not set in software, so NDL data were silently rejected too. The lander descended on IMU + optical nav only, came in fast, caught a foot, and tipped to ~30 degrees.",
+     smell:"Safety interlock not on a mandatory pre-encapsulation checklist; last-minute sensor substitution with no end-to-end integration test; no automated check that at least one ranging sensor is valid before powered descent.",
+     ility:"Survivability (returned data despite tipping) but a robustness/process failure; a pre-flight test-fire would likely have caught the switch.",
+     quote:"They had missed a data flag in the software to let it know the [NDL] data were valid. — Tim Crain, Intuitive Machines CTO",
+     src:"Space.com",url:"https://www.space.com/intuitive-machines-odysseus-moon-lander-tipped-over",conf:"HIGH",
+     tags:["gnc","altimetry","laser_rangefinder","single_string_sensor","no_dissimilar_redundancy","software_logic","data_valid_flag","ground_command_hazard","process_gap","skipped_test"]},
+    {id:"change6",mission:"Chang'e 6",agency:"CNSA",date:"2024-06-02",outcome:"Success",outcome_class:"SUCCESS",
+     phase:"Autonomous visual obstacle avoidance + hover + laser 3D scan; far-side sample return",subsystem:"GNC (nominal)",
+     sensor:"Visible-light hazard camera; laser 3D scanner during hover",
+     proximate:"None — first far-side sample return.",
+     smell:"Good practice: reuse of validated hazard-avoidance architecture; dissimilar sensing (camera + laser); hover margin.",
+     ility:"Robustness via commonality and sensor diversity",
+     quote:"Chang'e-6 used autonomous visual obstacle avoidance then hovered ~100 m and ran a laser 3D scanner for fine obstacle detection before final descent.",
+     src:"gov.cn",url:"https://english.www.gov.cn/news/202406/02/content_WS665bc29ec6d0868f4e8e7c54.html",conf:"HIGH",
+     tags:["success","redundancy_present","dissimilar_sensors","hazard_avoidance","hover_margin","commonality"]},
+    {id:"chandrayaan3",mission:"Chandrayaan-3 Vikram",agency:"ISRO",date:"2023-08-23",outcome:"Success",outcome_class:"SUCCESS",
+     phase:"Powered descent to south-polar region; redesign after Chandrayaan-2",subsystem:"GNC (nominal, hardened)",
+     sensor:"Two hazard cameras (vs one); added Laser Doppler Velocimeter (independent velocity); extra TTC antennas; central engine removed",
+     proximate:"None — succeeded by explicitly engineering against Chandrayaan-2's failure modes.",
+     smell:"Good practice: enumerated the prior failure modes and designed against each — added redundancy (2nd hazard camera, independent Doppler velocimeter, extra antennas), dispersion-tolerant software, a landing zone enlarged to ~4 km x 2.5 km, more fuel, stronger legs, multi-face solar.",
+     ility:"Engineered-in robustness and survivability",
+     quote:"Instead of success-based design in Chandrayaan-2, we are doing a failure-based design in Chandrayaan-3. What all can fail, and how to protect it. — ISRO Chairman S. Somanath",
+     src:"DNA India",url:"https://www.dnaindia.com/science/report-chandrayaan-3-has-a-failure-based-design-isro-chief-s-somanath-explains-3051052",conf:"HIGH",
+     tags:["success","failure_based_design","redundancy_present","dissimilar_sensors","doppler_velocimeter","dispersion_tolerance","larger_landing_zone"]},
+    {id:"blueghost1",mission:"Blue Ghost Mission 1",agency:"Firefly Aerospace",date:"2025-03-02",outcome:"Success",outcome_class:"SUCCESS",
+     phase:"Autonomous descent with vision-based Terrain-Relative Navigation + Hazard Avoidance",subsystem:"GNC (nominal)",
+     sensor:"Two vision cameras on a dedicated processor matching live imagery to onboard maps; IMU",
+     proximate:"None — first fully successful commercial lunar landing (Mare Crisium).",
+     smell:"Good practice: redundant dissimilar navigation (dual cameras + IMU + map matching); autonomous hazard-relative navigation; two autonomous divert maneuvers to a safe site.",
+     ility:"Robustness + survivability via autonomous divert",
+     quote:"Blue Ghost used vision-based Terrain-Relative Navigation and autonomously executed two hazard-avoidance divert maneuvers to a safe site.",
+     src:"NASA",url:"https://www.nasa.gov/news-release/touchdown-carrying-nasa-science-fireflys-blue-ghost-lands-on-moon/",conf:"HIGH",
+     tags:["success","terrain_relative_nav","redundancy_present","dissimilar_sensors","hazard_avoidance","autonomy"]},
+    {id:"im2",mission:"IM-2 Athena (Nova-C)",agency:"Intuitive Machines",date:"2025-03-06",outcome:"Failure (tipped, lost)",outcome_class:"TIPPED_LOST",
+     phase:"Terminal descent / powered landing at the lunar south pole",subsystem:"GNC / sensor (laser altimeter) + optical nav (crater recognition) + terrain model",
+     sensor:"Laser altimeter (noisy/distorted); optical nav camera (degraded by south-pole lighting); crater-recognition database from 100 km imagery",
+     proximate:"The laser altimeter saw signal noise/distortion preventing accurate altitude readings; low-angle south-pole sunlight degraded optical nav; the crater-recognition database (100 km imagery) did not represent low-altitude appearance under that lighting. The lander misjudged position/rate, struck a plateau, tipped, and skidded into a crater ~250 m off target; shadowed and regolith-covered, it died within hours.",
+     smell:"Repeated single-string laser-altimeter dependence (IM-1 to IM-2) with no dissimilar backup; terrain/crater reference not validated for approach geometry and south-pole lighting.",
+     ility:"Loss of both robustness and survivability (tipped into shadow, dead within hours).",
+     quote:"We saw signal noise and distortion that did not allow for accurate altitude readings. South Pole topography and low-angle sunlight created long shadows and dim lighting that challenged the precision capability of our landing systems. — Steve Altemus, IM CEO",
+     src:"Spaceflight Now",url:"https://spaceflightnow.com/2025/05/14/intuitive-machines-ceo-points-to-issues-that-prevented-upright-touchdown-during-im-2-moon-landing/",conf:"HIGH",
+     tags:["gnc","altimetry","laser_rangefinder","single_string_sensor","no_dissimilar_redundancy","terrain_model_mismatch","south_pole_lighting","repeated_failure_class","power_after_tipover"]},
+    {id:"hakuto_r_m2",mission:"Hakuto-R Mission 2 'Resilience'",agency:"ispace",date:"2025-06-05",outcome:"Crash",outcome_class:"LOST",
+     phase:"Terminal/vertical descent (final landing sequence)",subsystem:"GNC / sensor (Laser Range Finder hardware)",
+     sensor:"Laser Range Finder (LRF) — primary descent range/velocity sensor",
+     proximate:"The LRF under-performed in flight and did not return valid altitude measurements in time to trigger the final braking burn, so the lander could not slow to a safe speed; contact was lost ~90 s before landing and LRO confirmed a crash. ispace ruled out guidance software, propulsion, and power, attributing the loss to LRF hardware performance degradation (distinct from M1's software filter).",
+     smell:"Same class as M1: a single-string terminal-descent laser-ranging chain whose shortfall is loss-critical, with no dissimilar redundant backup. M1 fixed the specific software bug, but the architecture still had one ranging chain. The flown LRF was not flight-proven.",
+     ility:"Loss of robustness — a loss-critical single-string sensor's in-flight underperformance was not contained.",
+     quote:"The review concluded that the possibility of deterioration in the performance of the LRF during flight, or the performance itself was lower than expected, is high. — ispace, June 24, 2025",
+     src:"ispace",url:"https://ispace-inc.com/news-en/?p=7671",conf:"HIGH",
+     tags:["gnc","altimetry","laser_rangefinder","single_string_sensor","no_dissimilar_redundancy","repeated_failure_class","not_flight_proven_hardware","no_graceful_degradation"]}
+  ],
+
+  checks: [
+    {id:"chk_single_string_ranging",name:"Single-string terminal-descent ranging sensor",severity:5,
+     question:"Does terminal descent depend on one ranging/altimetry sensor with no dissimilar redundant backup and no graceful degradation if it fails, is filtered out, or under-performs?",
+     present:["laser range finder","laser rangefinder","lrf","radar altimeter","laser altimeter","altimeter","rangefinder","single","sole","only altitude","primary altitude","primary source of altitude","no independent altitude","no backup"],
+     mitig:["redundant altimeter","dissimilar","two altimeters","dual altimeter","sensor fusion","fused","backup altimeter","secondary altimeter","graceful degradation","fallback","doppler velocimeter","doppler lidar","redundant ranging","diverse sensors","take over manually","manually","dead-reckoned","commander can take over"],
+     precedents:["hakuto_r_m1","hakuto_r_m2","im1","im2","beresheet"],
+     rec:"Add a dissimilar, redundant ranging path (for example a Doppler lidar alongside a laser/radar altimeter) with sensor fusion and explicit graceful degradation if one source drops out. Chandrayaan-3 added an independent laser Doppler velocimeter after Chandrayaan-2; Chang'e and Blue Ghost fly dissimilar sensors."},
+    {id:"chk_outlier_rejection",name:"Hard outlier rejection without a terrain-aware sanity model",severity:5,
+     question:"Does the nav filter reject anomalous readings without a terrain-aware (DEM-based) model, so valid-but-surprising data (a crater-rim step) can be discarded with no fallback?",
+     present:["outlier","reject","anomalous","filter out","discard","gating","intercept","threshold","fault detection","spurious","sanity check"],
+     mitig:["terrain model","dem","digital elevation","terrain-aware","expected terrain","map-relative","route terrain profile","physically plausible","terrain database","known terrain"],
+     precedents:["hakuto_r_m1","beresheet"],
+     rec:"Gate measurements against a terrain-aware expectation (a DEM along the planned route), not just deviation from a pre-planned estimate, and never let a filter silently quarantine the only source of a state with no fallback. Hakuto-R M1 rejected a valid 3 km crater-rim step and believed it had landed at 5 km."},
+    {id:"chk_sensor_liveness",name:"No pre-maneuver sensor-liveness / validity check",severity:5,
+     question:"Before an irreversible maneuver (landing burn, orbit-lowering burn), does the system verify critical feedback sensors are powered and valid — with an abort/hold if not — rather than silently falling back to open-loop timing or invalid data?",
+     present:["open loop","timer-only","fixed-time","timed cutoff","time-based cutoff","commit to descent","irreversible burn","fixed-duration burn"],
+     mitig:["liveness check","validity check","pre-burn check","abort if invalid","sensor health","go/no-go","hold if no data","confirm sensor active","data-valid flag verified","health check"],
+     precedents:["luna25","im1","beresheet"],
+     rec:"Require an explicit go/no-go that all loss-critical feedback sensors are live and valid before any irreversible maneuver; do not silently fall back to open-loop timing (Luna 25 burned 127 s vs 84 s on a timer because its accelerometer was never powered) or to data flagged invalid (IM-1's unset NDL data-valid flag)."},
+    {id:"chk_command_propulsion_isolation",name:"Sensor/recovery commands can disturb propulsion or trigger reboots",severity:5,
+     question:"Can a sensor-management action, fault response, or ground recovery command trigger a flight-computer reboot or shut down propulsion during a critical burn? Is the engine-control path isolated and latched through faults/reboots?",
+     present:["reboot","restart","reset","watchdog","fault response","protective shutdown","engine shutdown","ground command","recovery command","computer restart"],
+     mitig:["latched engine","isolation","keep engine running","independent engine control","no reboot during burn","fault containment","partitioned","preserves thrust"],
+     precedents:["beresheet"],
+     rec:"Isolate sensor-recovery and fault management from the engine-control path, and latch propulsion through reboots and fault transients during powered descent. Beresheet's engine shut down because a command to restart a failed IMU rebooted the flight computer."},
+    {id:"chk_terrain_db_validation",name:"Terrain / hazard database not validated for approach geometry and lighting",severity:4,
+     question:"Is terrain-relative navigation / crater recognition validated against the actual approach geometry, altitude, and lighting (low-angle south-pole sun, long shadows), not nadir/high-altitude reference imagery?",
+     present:["crater recognition","terrain relative","trn","optical navigation","hazard map","reference imagery","lro","south pole","shadow","lighting","feature matching","landmark"],
+     mitig:["validated for approach angle","lighting conditions modeled","low-sun","shadow modeling","approach-geometry imagery","site-specific tuning","illumination tested","rendered for descent geometry"],
+     precedents:["im2"],
+     rec:"Validate terrain-relative navigation and crater recognition against the actual approach geometry and site lighting (model long shadows and low-sun conditions); do not rely on high-altitude nadir imagery for a low-altitude polar approach. IM-2 used 100 km reference imagery for a low-angle south-pole landing."},
+    {id:"chk_known_risk_acceptance",name:"Known open risk item accepted under schedule/cost pressure",severity:4,
+     question:"Are known open risk items, deferred fixes, inaccessible-for-inspection components, or skipped tests being carried to flight because resolving them would impact schedule/cost or invalidate prior acceptance tests?",
+     present:["risk acceptance","waiver","deferred","known issue","open item","launch window","not replaced","inaccessible","skipped test","not flight-proven","not previously flown","heritage waiver","first flight of"],
+     mitig:["risk retired","resolved before flight","replaced","full acceptance test","flight-proven","test-fire completed","inspection access","no open critical risks","qualified by test"],
+     precedents:["peregrine","im1","hakuto_r_m2"],
+     rec:"Retire loss-critical risk items before flight, design for inspectability, and fly proven hardware for loss-critical functions. Peregrine flew a known-suspect valve; IM-1 flew with an unverified safety switch; Hakuto-R M2 flew a not-flight-proven laser range finder."},
+    {id:"chk_post_cdr_change",name:"Post-CDR change without full re-validation",severity:4,
+     question:"Has the ConOps, landing site, descent route, or a sensor/payload configuration changed after Critical Design Review without a full re-run of simulation/verification for the new conditions?",
+     present:["landing site change","after cdr","post-cdr","route change","re-target","new landing site","late change","reconfigure","finalized after","changed the landing"],
+     mitig:["re-simulated","re-validated","full v&v after change","regression test","re-ran simulations","terrain re-analyzed"],
+     precedents:["hakuto_r_m1","im1"],
+     rec:"Any post-CDR change to landing site, route, or sensor configuration should trigger a full re-run of terrain/descent simulation and verification. Hakuto-R M1 changed its landing site after CDR without adequately re-simulating the new route's terrain."},
+    {id:"chk_power_after_tipover",name:"Power/comms not robust to off-nominal landing attitude",severity:3,
+     question:"If the lander ends up tipped or on its side, can it still generate power and communicate long enough to be useful, or is power/comms tied to a single upright pose?",
+     present:["solar panel","solar array","power generation","upright","attitude at landing","tipped","single face","top-mounted solar","upper deck"],
+     mitig:["multi-face solar","panels on multiple sides","multiple faces","body-mounted cells multiple faces","survive tipover","survive an off-nominal attitude","omni antenna","power tolerant to attitude"],
+     precedents:["slim","im1","im2"],
+     rec:"Provide power and comms paths that tolerate an off-nominal landing attitude (for example solar cells on multiple faces). SLIM survived a tip-over thanks to later illumination; IM-2 died within hours tipped into shadow with covered panels."},
+    {id:"chk_engine_out_attitude",name:"Attitude control not sized for engine-out / asymmetric thrust",severity:3,
+     question:"Is attitude-control authority sized for an engine-out or asymmetric-thrust event in terminal descent, and are the legs rated for the resulting off-nominal touchdown?",
+     present:["two main engines","multiple engines","lateral velocity","nozzle","engine out","engine-out","asymmetric"],
+     mitig:["engine-out tolerant","sized for an engine-out","sized for asymmetric thrust","rcs authority margin","strong legs","rated to higher impact","impact velocity margin","single-engine descent capable"],
+     precedents:["slim","chandrayaan2"],
+     rec:"Size attitude-control authority and leg strength for an engine-out or asymmetric-thrust transient in terminal descent. SLIM lost a nozzle at 50 m and tipped from unrecoverable lateral velocity despite a correct software response."}
+  ],
+
+  examples: {
+    resilience:{
+      note:"Reconstructed from public ispace Mission-2 materials. This mission was lost; the flags below draw only on earlier missions.",
+      hindcast:"hakuto_r_m2",
+      text:`DESCENT GNC — CONCEPT OF OPERATIONS (CRITICAL DESIGN REVIEW EXCERPT)
+
+3.2 Terminal descent sensing. The primary source of altitude and descent velocity during the final landing sequence is the onboard Laser Range Finder (LRF). The LRF is expected to acquire a valid range from approximately 3 km altitude and provides the range and velocity used to trigger and shape the final braking burn. There is no independent altitude source in the terminal phase; the inertial solution is propagated between LRF updates.
+
+3.3 Measurement health. To protect against spurious returns, the navigation filter applies an outlier-rejection threshold: range measurements that deviate strongly from the propagated estimate are treated as anomalous and rejected, and the filter continues on the inertial estimate until valid measurements resume.
+
+3.4 Landing site. The landing site in Mare Frigoris was finalized after CDR; descent simulations use the baseline terrain profile.
+
+4.1 Sensor selection. The LRF unit was selected for mass and cost; it has not previously flown on a lunar descent. Component-level qualification was performed to acceptance levels. A second ranging sensor was considered early in the program but was descoped to protect mass margin; the LRF is the sole ranging source in the terminal phase.
+
+4.2 Power. Solar cells are body-mounted on the upper deck consistent with the nominal upright landing attitude.`
+    },
+    apollo:{
+      note:"Faithful paraphrase of NASA Apollo Experience Report TN D-6849 (Rozas & Cunningham, 1972) — a genuinely public, external design document.",
+      hindcast:null,
+      text:`APOLLO LUNAR MODULE — LANDING RADAR / POWERED DESCENT (EXPERIENCE REPORT EXCERPT)
+
+The landing radar is the primary external sensor for powered descent, providing slant-range altitude and three-axis velocity to the Primary Guidance, Navigation and Control System (PGNCS) below roughly 12 km. A single landing radar antenna serves the descent; the radar updates the inertial state estimate maintained by the IMU.
+
+During descent the crew monitor altitude and velocity on the displays. The guidance computer can issue program alarms under processor overload; on Apollo 11, 1201 and 1202 alarms occurred but the computer's priority scheduling shed low-priority tasks and continued the essential guidance, and the crew elected to continue. The commander can take over manually and has authority to abort.
+
+Radar data are reasonableness-checked before incorporation; if the radar is not yet locked, guidance continues on the inertial solution. The inertial measurement unit provides an independent dead-reckoned state throughout.`
+    },
+    robust:{
+      note:"A design that applies the lessons — expect mostly mitigated checks.",
+      hindcast:null,
+      text:`HARDENED DESCENT GNC — DESIGN SUMMARY
+
+Navigation uses dissimilar redundant sensing: a laser Doppler velocimeter and a radar altimeter are fused with vision-based terrain-relative navigation; the architecture provides graceful degradation if any single sensor drops out, with an independent altitude source retained at all times.
+
+Measurement gating is terrain-aware: altimeter and ranging returns are checked against a digital elevation model (DEM) along the planned route, so a valid altitude step over terrain is accepted rather than rejected. The crater-recognition database is rendered for the actual approach geometry and validated for low-sun south-pole lighting and long shadows.
+
+Before the braking burn a go/no-go sensor-liveness and validity check confirms all loss-critical feedback sensors are powered and reporting valid data; if not, the maneuver holds. Fault management is partitioned from engine control, and the main engine is latched through any reboot during powered descent.
+
+All loss-critical risk items were retired before flight; loss-critical hardware is flight-proven and qualified by test. The landing zone was enlarged for dispersion tolerance and the attitude-control system is sized for an engine-out transient with legs rated to higher impact velocity. Solar cells are mounted on multiple faces to survive an off-nominal attitude.`
+    },
+    blank:{note:"Paste a design-review excerpt, ConOps, or descent-GNC description.",hindcast:null,text:""}
+  }
+};
+
+/* ======================= APP ======================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const byId=id=>DATA.missions.find(m=>m.id===id);
+const byCheck=id=>DATA.checks.find(c=>c.id===id);
+let MODE="demo", BUSY=false, SERVER_CONFIG=null;
+
+function runButtonText(){return MODE==="agent"?"Run review (agent)":(MODE==="live"?"Run review (LLM)":"Run review");}
+function refreshRunButton(){if(!BUSY)$("#runBtn").textContent=runButtonText();}
+function setBusy(msg){BUSY=true;$("#busyText").textContent=msg||"Processing…";$("#busy").style.display="flex";$("#runBtn").disabled=true;$("#runBtn").textContent="Processing…";}
+function clearBusy(){BUSY=false;$("#busy").style.display="none";$("#runBtn").disabled=false;refreshRunButton();}
+
+$$("nav button").forEach(b=>b.onclick=()=>{
+  $$("nav button").forEach(x=>x.classList.remove("active"));
+  $$(".panel").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active"); $("#"+b.dataset.tab).classList.add("active");
+});
+$$("#modeSeg button").forEach(b=>b.onclick=()=>{
+  $$("#modeSeg button").forEach(x=>x.classList.remove("on")); b.classList.add("on");
+  MODE=b.dataset.mode; $("#liveCfg").style.display = MODE==="demo"?"none":"block";
+  refreshRunButton();
+});
+
+const MODEL_OPTIONS={
+  anthropic:[
+    {id:"claude-3-5-haiku-latest",label:"Claude 3.5 Haiku (lightweight)"},
+    {id:"claude-sonnet-4-6",label:"Claude Sonnet 4.6"}
+  ],
+  openai:[
+    {id:"gpt-4o-mini",label:"GPT-4o mini"},
+    {id:"gpt-4o",label:"GPT-4o"}
+  ],
+  parley:[
+    {id:"openai/gpt-5-mini",label:"GPT-5 Mini (recommended)"},
+    {id:"openai/gpt-5-nano",label:"GPT-5 Nano (cheaper, less reliable)"},
+    {id:"google/gemini-3.0-flash",label:"Gemini 3.0 Flash"},
+    {id:"google/gemini-3.1-pro",label:"Gemini 3.1 Pro"},
+    {id:"bedrock/llama-4-maverick-17b",label:"Llama 4 Maverick"},
+    {id:"bedrock/claude-haiku-4-5",label:"Claude Haiku 4.5 (Parley/Bedrock)"},
+    {id:"bedrock/claude-sonnet-4-6",label:"Claude Sonnet 4.6 (Parley/Bedrock)"}
+  ]
+};
+const PROVIDERS={
+  local:{label:"Local server",keyLabel:"API key",placeholder:"not needed; server reads env",model:""},
+  anthropic:{label:"Anthropic",keyLabel:"Anthropic API key",placeholder:"sk-ant-...",model:"claude-3-5-haiku-latest"},
+  parley:{label:"MIT Parley",keyLabel:"MIT Parley API key",placeholder:"sk-parley-v1-...",model:"openai/gpt-5-mini"}
+};
+function modelOptionsFor(provider){
+  if(provider==="local"&&SERVER_CONFIG){return SERVER_CONFIG.models||MODEL_OPTIONS[SERVER_CONFIG.provider]||[];}
+  return MODEL_OPTIONS[provider]||[];
+}
+function populateModelSelect(){
+  const provider=$("#provider").value, cfg=PROVIDERS[provider]||PROVIDERS.local;
+  const opts=modelOptionsFor(provider), current=$("#model").value.trim()||cfg.model||(SERVER_CONFIG&&SERVER_CONFIG.default_model)||"";
+  let h="";
+  for(const m of opts){h+=`<option value="${esc(m.id)}">${esc(m.label||m.id)}</option>`;}
+  h+=`<option value="__custom__">Custom model id…</option>`;
+  $("#modelPreset").innerHTML=h;
+  const ids=opts.map(m=>m.id);
+  if(current&&ids.includes(current)){$("#modelPreset").value=current;$("#model").value=current;$("#model").style.display="none";}
+  else if(current){$("#modelPreset").value="__custom__";$("#model").value=current;$("#model").style.display="block";}
+  else if(opts.length){$("#modelPreset").value=opts[0].id;$("#model").value=opts[0].id;$("#model").style.display="none";}
+  else {$("#modelPreset").value="__custom__";$("#model").value="";$("#model").style.display="block";}
+}
+function updateProviderFields(){
+  const cfg=PROVIDERS[$("#provider").value]||PROVIDERS.local;
+  if($("#provider").value==="local"&&SERVER_CONFIG){cfg.model=SERVER_CONFIG.default_model||"";}
+  $("#apiKeyLabel").textContent=cfg.keyLabel;
+  $("#apikey").placeholder=cfg.placeholder;
+  $("#apikey").disabled=$("#provider").value==="local";
+  if($("#provider").value==="local")$("#apikey").value="";
+  $("#model").placeholder=$("#provider").value==="local"?"server default or custom id":"custom model id";
+  const current=$("#model").value.trim();
+  const allKnown=Object.values(MODEL_OPTIONS).flat().map(m=>m.id).concat(Object.values(PROVIDERS).map(p=>p.model).filter(Boolean));
+  if(!current||allKnown.includes(current))$("#model").value=cfg.model||"";
+  populateModelSelect();
+}
+$("#provider").onchange=updateProviderFields;
+$("#modelPreset").onchange=()=>{const v=$("#modelPreset").value;if(v==="__custom__"){$("#model").style.display="block";$("#model").focus();}else{$("#model").value=v;$("#model").style.display="none";}};
+async function loadServerConfig(){
+  if(location.protocol==="file:")return;
+  try{
+    const res=await fetch("/api/config",{cache:"no-store"});
+    if(res.ok)SERVER_CONFIG=await res.json();
+  }catch(e){/* static hosting or no backend */}
+}
+
+function loadExample(){
+  const ex=DATA.examples[$("#example").value];
+  $("#doc").value=ex.text; $("#srcNote").textContent=ex.note||"";
+}
+$("#example").onchange=loadExample;
+
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function findHits(text,terms){const low=text.toLowerCase(),seen=new Set(),out=[];
+  for(const t of terms){if(low.includes(t)&&!seen.has(t)){seen.add(t);out.push({term:t,idx:low.indexOf(t)});}}return out;}
+function snippet(text,idx,len){const a=Math.max(0,idx-45),b=Math.min(text.length,idx+len+55);
+  return (a>0?"…":"")+text.slice(a,b)+(b<text.length?"…":"");}
+function hl(snip,term){const re=new RegExp("("+term.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig");
+  return esc(snip).replace(re,"<mark>$1</mark>");}
+
+function bandFor(full,any){
+  if(full.some(f=>f.severity>=5))return["HIGH RISK","b-high"];
+  if(full.length)return["ELEVATED","b-elev"];
+  if(any)return["FOR REVIEW","b-rev"];
+  return["LOW RISK","b-low"];
+}
+
+function render(results,passes,info){
+  // results: [{check, severity, status:'flag'|'partial', evidence, why, confidence}]
+  const full=results.filter(r=>r.status==="flag");
+  const partial=results.filter(r=>r.status==="partial");
+  results.sort((a,b)=>(a.status==="flag"?0:1)-(b.status==="flag"?0:1)||b.severity-a.severity);
+  const [band,bcls]=bandFor(full,results.length>0);
+  const score=full.reduce((s,r)=>s+r.severity,0)+(results.length-full.length);
+  const maxSev=results.reduce((m,r)=>Math.max(m,r.severity||0),0);
+  let h=`<div class="verdict"><span class="band ${bcls}">${band}</span>
+    <span class="meta">${info||""}</span></div>`;
+  h+=`<div class="summary-strip">
+    <div class="summary-tile"><span class="num">${score}</span><span class="txt">risk index</span></div>
+    <div class="summary-tile"><span class="num">${full.length}</span><span class="txt">flagged checks</span></div>
+    <div class="summary-tile"><span class="num">${partial.length}</span><span class="txt">partial mitigations</span></div>
+    <div class="summary-tile"><span class="num">${passes.length}</span><span class="txt">mitigated checks</span></div>
+    <div class="summary-tile"><span class="num">${maxSev||"—"}</span><span class="txt">max severity</span></div>
+  </div>`;
+  function confBadge(conf){
+    if(!conf)return "";
+    const c=String(conf).toLowerCase();
+    const cls=c.includes("high")?"conf-high":(c.includes("low")?"conf-low":"conf-medium");
+    return `<span class="badge ${cls}">CONF ${esc(String(conf).toUpperCase())}</span>`;
+  }
+  function occurrences(c){
+    const items=c.precedents.map(pid=>byId(pid)).filter(Boolean);
+    if(!items.length)return "";
+    let out=`<details class="occ"><summary>Past occurrences (${items.length})</summary>`;
+    for(const m of items){out+=`<div class="prec">${esc(m.mission)} (${m.date}, ${esc(m.outcome_class.replace(/_/g," "))}) &mdash; ${esc(m.proximate.slice(0,150))}${m.proximate.length>150?"…":""} <a href="${m.url}" target="_blank">source</a></div>`;}
+    return out+`</details>`;
+  }
+  function resultCard(r){
+    const c=r.check, pct=Math.max(8,Math.min(100,(r.severity||0)*20));
+    const statusCls=r.status==="flag"?"flagged":"partial";
+    const statusLab=r.status==="flag"?"FLAGGED":"PARTIAL";
+    const sevCls="s"+r.severity;
+    return `<div class="result-card ${statusCls}"><div class="sevbar"><span class="${sevCls}" style="width:${pct}%"></span></div><div class="card-body">
+      <div class="card-head"><div class="card-title">${esc(c.name)}</div><div class="badges"><span class="badge sev${r.severity}">SEV ${r.severity}</span><span class="badge">${statusLab}</span>${confBadge(r.confidence)}</div></div>
+      <div class="card-q">${esc(c.question)}</div>
+      ${r.evidence?`<div class="card-ev">${r.evidence}${r.why?`<span class="why">${esc(r.why)}</span>`:""}</div>`:""}
+      ${occurrences(c)}
+      <div class="rec"><b>Suggested mitigation.</b> ${esc(c.rec)}</div>
+    </div></div>`;
+  }
+  function passCard(c){
+    return `<div class="result-card pass"><div class="sevbar"><span class="ok" style="width:100%"></span></div><div class="card-body">
+      <div class="card-head"><div class="card-title">${esc(c.name)}</div><div class="badges"><span class="badge pass">MITIGATED</span></div></div>
+      <div class="card-q">${esc(c.question)}</div>${occurrences(c)}<div class="rec"><b>Good sign.</b> Mitigation language was detected or the model judged this failure mode addressed.</div>
+    </div></div>`;
+  }
+  const groups=[
+    ["Flagged risks",full],
+    ["Partially addressed",partial]
+  ];
+  for(const [title,items] of groups){
+    if(!items.length)continue;
+    h+=`<section class="result-group"><h3 class="group-title">${title}<span class="count">${items.length}</span></h3><div class="result-grid">`;
+    for(const r of items)h+=resultCard(r);
+    h+=`</div></section>`;
+  }
+  if(passes.length){
+    h+=`<section class="result-group"><h3 class="group-title">Mitigated / passed<span class="count">${passes.length}</span></h3><div class="result-grid">`;
+    for(const p of passes)h+=passCard(p);
+    h+=`</div></section>`;
+  }
+  const ex=DATA.examples[$("#example").value];
+  if(ex.hindcast){const m=byId(ex.hindcast);
+    h+=`<div class="ctx">This example corresponds to <b>${esc(m.mission)}</b> (${esc(m.agency)}, lost ${m.date}). The flags above are drawn only from earlier missions, i.e. the risk was identifiable before this mission flew. The proximate cause differed from Mission 1 (hardware vs software), but the underlying weakness — a single ranging chain with no dissimilar redundancy — was shared.</div>`;}
+  $("#results").innerHTML=h;
+}
+
+function runDemo(){
+  const text=($("#doc").value||"").replace(/\s+/g," ").trim(); if(!text){$("#results").innerHTML="";return;}
+  const results=[],passes=[];
+  for(const c of DATA.checks){
+    const pres=findHits(text,c.present), mit=findHits(text,c.mitig);
+    if(pres.length===0){ if(mit.length)passes.push(c); continue; }
+    const status=mit.length?"partial":"flag";
+    const ev=pres[0];
+    results.push({check:c,severity:c.severity,status,evidence:hl(snippet(text,ev.idx,ev.term.length),ev.term),
+      why: mit.length?("mitigation language also present (verify): "+mit.map(m=>m.term).join(", ")):""});
+  }
+  render(results,passes,"offline keyword match");
+}
+
+function checksForPrompt(){return DATA.checks.map(c=>({id:c.id,name:c.name,question:c.question,severity:c.severity}));}
+function parseModelJSON(txt){
+  txt=(txt||"").trim().replace(/^```json\s*/i,"").replace(/^```\s*/,"").replace(/```\s*$/,"").trim();
+  try{return JSON.parse(txt);}catch(e){
+    const a=txt.indexOf("{"), b=txt.lastIndexOf("}");
+    if(a>=0&&b>a)return JSON.parse(txt.slice(a,b+1));
+    throw e;
+  }
+}
+async function callModelJSON(cfg,system,user,maxTokens){
+  if(cfg.provider==="local"){
+    if(location.protocol==="file:")throw new Error("Local server mode requires opening the page from python3 redteam.py --serve, not file://.");
+    const res=await fetch("/api/model-json",{method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({system:system,user:user,max_tokens:maxTokens||2000,model:cfg.model||undefined})});
+    const data=await res.json();
+    if(data.error)throw new Error("Server error: "+data.error);
+    if(!res.ok)throw new Error("Server error: HTTP "+res.status);
+    return data;
+  }
+  if(cfg.provider==="anthropic"){
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+      headers:{"x-api-key":cfg.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true","content-type":"application/json"},
+      body:JSON.stringify({model:cfg.model,max_tokens:maxTokens||2000,temperature:0,system:system,messages:[{role:"user",content:user}]})});
+    const data=await res.json();
+    if(data.error)throw new Error("API error: "+(data.error.message||JSON.stringify(data.error)));
+    if(!res.ok)throw new Error("API error: HTTP "+res.status);
+    return parseModelJSON((data.content&&data.content[0]&&data.content[0].text)||"");
+  }
+  if(cfg.provider==="parley"){
+    const completionCap=cfg.model.startsWith("openai/gpt-5-nano")?Math.max(maxTokens||2000,32768):(cfg.model.startsWith("openai/gpt-5")?Math.max(maxTokens||2000,8192):(maxTokens||2000));
+    const body={model:cfg.model,messages:[{role:"system",content:system},{role:"user",content:user}],max_completion_tokens:completionCap};
+    if(cfg.model.startsWith("openai/gpt-5")){body.reasoning_effort="minimal"; body.response_format={type:"json_object"};}
+    const res=await fetch("https://parley.api.mit.edu/v1/chat/completions",{method:"POST",
+      headers:{"authorization":"Bearer "+cfg.key,"content-type":"application/json"},
+      body:JSON.stringify(body)});
+    const data=await res.json();
+    if(data.error)throw new Error("API error: "+(data.error.message||JSON.stringify(data.error)));
+    if(!res.ok)throw new Error("API error: HTTP "+res.status);
+    let content=(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||"";
+    if(Array.isArray(content))content=content.map(x=>typeof x==="string"?x:(x.text||x.content||"")).join("");
+    if(!String(content).trim())throw new Error("Parley returned an empty assistant message; try openai/gpt-5-mini or use the CLI with REDTEAM_DEBUG_LLM=1.");
+    return parseModelJSON(String(content));
+  }
+  throw new Error("Unknown provider: "+cfg.provider);
+}
+function renderFindings(findings,info){
+  const results=[],passes=[],seen=new Set();
+  for(const f of (findings||[])){
+    const c=byCheck(f.check_id); if(!c||seen.has(c.id))continue;
+    let status=String(f.status||"").toLowerCase();
+    if(status==="pass"){passes.push(c);seen.add(c.id);continue;}
+    if(status!=="flag"&&status!=="partial")continue;
+    const ev=String(f.evidence||""), evl=ev.toLowerCase(), combined=(ev+" "+String(f.rationale||"")).toLowerCase();
+    if(evl.includes("not_stated")||evl.includes("not addressed in design text"))continue;
+    if(c.id==="chk_outlier_rejection"&&!/(outlier|reject|rejection|gating|threshold|discard|anomalous|spurious|intercept)/i.test(evl))continue;
+    if(c.id==="chk_command_propulsion_isolation"&&!/(reboot|restart|reset|watchdog|shutdown|shut down|computer restart)/i.test(evl))continue;
+    if(c.id==="chk_sensor_liveness"&&status==="flag"&&/(health check|health checks|validity check|liveness check|go\/no-go)/i.test(combined))status="partial";
+    seen.add(c.id);
+    const why=f.rationale||"";
+    results.push({check:c,severity:c.severity,status:status,evidence:ev?("&ldquo;"+esc(ev)+"&rdquo;"):"",why:why,confidence:f.confidence||""});
+  }
+  render(results,passes,info);
+}
+function llmConfig(){
+  const provider=$("#provider").value, p=PROVIDERS[provider]||PROVIDERS.local;
+  const key=$("#apikey").value.trim(), model=$("#model").value.trim()||p.model;
+  if(provider!=="local"&&!key)throw new Error("Enter a "+p.keyLabel+" to use an LLM mode, or switch to Demo.");
+  return {provider,key,model,label:p.label};
+}
+function cfgLabel(cfg){return cfg.label+" / "+(cfg.model||"server default");}
+
+async function runLive(){
+  const text=$("#doc").value||""; if(!text.trim()){$("#results").innerHTML="";return;}
+  let cfg; try{cfg=llmConfig();}catch(e){$("#results").innerHTML=`<div class="err">${esc(e.message)}</div>`;return;}
+  setBusy(`Calling ${cfgLabel(cfg)} (single pass)…`);
+  $("#results").innerHTML=`<div class="note">Calling ${esc(cfgLabel(cfg))} (single pass)…</div>`;
+  const sys="You review a lunar lander descent/landing design against known GNC failure modes. "+
+    "You are given a list of failure modes (id, name, diagnostic question, severity) and a design text. "+
+    "For each failure mode, judge ONLY from affirmative evidence in the design text whether the risk is: 'flag' (present and not mitigated), "+
+    "'partial' (present but partially mitigated), 'pass' (clearly mitigated/addressed), or omit it if not applicable or merely not discussed. "+
+    "Do not flag a check just because a mitigation is absent. Quote a short verbatim snippet of evidence from the text, give a one-sentence rationale, and include confidence high|medium|low. "+
+    "Return STRICT JSON only, no prose: {\"findings\":[{\"check_id\":\"...\",\"status\":\"flag|partial|pass\",\"evidence\":\"...\",\"rationale\":\"...\",\"confidence\":\"high|medium|low\"}]}";
+  const user="FAILURE MODES:\n"+JSON.stringify(checksForPrompt(),null,0)+"\n\nDESIGN TEXT:\n"+text;
+  try{
+    const parsed=await callModelJSON(cfg,sys,user,2000);
+    renderFindings(parsed.findings,"LLM single pass ("+esc(cfgLabel(cfg))+")");
+  }catch(e){
+    $("#results").innerHTML=`<div class="err">Could not complete the call (${esc(String(e.message||e))}). If this is a CORS or network error, run <code>redteam.py --llm --provider ${esc(cfg.provider)}</code> instead.</div>`;
+  }finally{clearBusy();}
+}
+
+async function runAgent(){
+  const text=$("#doc").value||""; if(!text.trim()){$("#results").innerHTML="";return;}
+  let cfg; try{cfg=llmConfig();}catch(e){$("#results").innerHTML=`<div class="err">${esc(e.message)}</div>`;return;}
+  const checks=checksForPrompt();
+  try{
+    setBusy(`Agent pass 1/3 with ${cfgLabel(cfg)}: extracting design facts…`);
+    $("#results").innerHTML=`<div class="note">Agent pass 1/3 with ${esc(cfgLabel(cfg))}: extracting design facts…</div>`;
+    const factSys="You are the intake phase of a lunar-lander design-review agent. Extract only facts directly supported by the design text. Focus on terminal descent sensing, sensor fusion, redundancy, fallback modes, measurement filtering/gating, terrain databases/lighting, pre-maneuver liveness checks, fault-management/propulsion isolation, late changes, accepted/open risks, power after tip-over, and engine-out/asymmetric-thrust tolerance. Do not evaluate risk yet. Return STRICT JSON only: {\"summary\":\"...\",\"facts\":[{\"topic\":\"...\",\"claim\":\"...\",\"quote\":\"...\"}],\"not_stated\":[\"...\"]}";
+    const facts=await callModelJSON(cfg,factSys,"DESIGN TEXT:\n"+text,1800);
+
+    setBusy("Agent pass 2/3: drafting findings against the failure record…");
+    $("#results").innerHTML=`<div class="note">Agent pass 2/3: drafting findings against the failure record…</div>`;
+    const draftSys="You are a cautious lunar lander GNC red-team reviewer. Use the design text plus the extracted fact sheet to evaluate each failure mode. Apply these guardrails: (1) Do NOT treat the mere mention of Doppler lidar, radar, laser, or landing radar as redundancy; it is a mitigation only if the text states an independent/dissimilar backup, fusion, or explicit graceful degradation. (2) Do NOT flag outlier rejection from generic words like 'rejected' unless the context is measurement/filter/gating logic. (3) A terrain/hazard database is mitigated only if validated for the actual approach geometry, altitude, and lighting. (4) Known reliability issues, not-flight-proven loss-critical hardware, waivers, skipped tests, risks assumed remedied, or no active FDIR during descent should be treated as known/open risk acceptance unless clearly retired. (5) Pass only when a mitigation is explicit; if present but incomplete/uncertain, use partial. (6) Do not flag a check merely because a mitigation is absent or a fact is listed as not_stated; there must be affirmative design-text evidence that the risky pattern is present. (7) A Kalman filter alone is not outlier rejection; outlier-rejection risk requires evidence of gating/rejection/thresholding/discarding measurements. Statuses: flag, partial, pass, or omit if not applicable. Quote short verbatim evidence from the design text. Return STRICT JSON only: {\"findings\":[{\"check_id\":\"...\",\"status\":\"flag|partial|pass\",\"evidence\":\"...\",\"rationale\":\"...\",\"confidence\":\"high|medium|low\"}]}";
+    const draftUser="FAILURE MODES:\n"+JSON.stringify(checks,null,0)+"\n\nEXTRACTED FACTS:\n"+JSON.stringify(facts,null,0)+"\n\nDESIGN TEXT:\n"+text;
+    const draft=(await callModelJSON(cfg,draftSys,draftUser,2200)).findings||[];
+
+    setBusy("Agent pass 3/3: auditing false positives and false mitigations…");
+    $("#results").innerHTML=`<div class="note">Agent pass 3/3: auditing false positives and false mitigations…</div>`;
+    const auditSys="You are the audit/finalization phase of a lunar-lander design-review agent. Correct the draft findings for missed applicable checks, false positives, and false mitigations. Be especially strict about these regression traps from real ConOps documents: - 'Doppler lidar' can be the sole sensor or a replacement for radar; do not call it redundancy unless another independent path is stated. - 'Sun sensors were rejected' or a rejected design trade is not an outlier-rejection filter. - A 'landing radar' or four-beam radar can still be single-string terminal ranging. - 'No active FDIR during descent', 'known issue', 'assumed remedied', 'not flight proven', or skipped tests are risk-acceptance evidence. - Terrain/lighting handling should be credited when the design explicitly chooses lighting and prepares the terrain database accordingly; downgrade only if the text also reveals a validation/geometry gap. - Do not use not_stated items as evidence for a flag. Absence of a mitigation means omit unless the risky architecture/logic itself is affirmatively present in the design text. - Kalman filtering alone is not hard outlier rejection; require explicit gating/rejection/threshold/discard language. - Missing power-after-tipover provisions should be omitted unless the text discusses solar/power/comms geometry or upright/tipped attitude dependence. - 'No active FDIR during descent' maps to known/open risk acceptance, not reboot/propulsion-isolation unless reboot/shutdown coupling is stated. Return the final corrected findings as STRICT JSON only, no prose: {\"findings\":[{\"check_id\":\"...\",\"status\":\"flag|partial|pass\",\"evidence\":\"...\",\"rationale\":\"...\",\"confidence\":\"high|medium|low\"}]}";
+    const auditUser="FAILURE MODES:\n"+JSON.stringify(checks,null,0)+"\n\nEXTRACTED FACTS:\n"+JSON.stringify(facts,null,0)+"\n\nDRAFT FINDINGS:\n"+JSON.stringify({findings:draft},null,0)+"\n\nDESIGN TEXT:\n"+text;
+    const final=(await callModelJSON(cfg,auditSys,auditUser,2400)).findings||[];
+    renderFindings(final,"LLM agent ("+esc(cfgLabel(cfg))+")");
+  }catch(e){
+    $("#results").innerHTML=`<div class="err">Could not complete the agent review (${esc(String(e.message||e))}). If this is a CORS or network error, run <code>redteam.py --agent --provider ${esc(cfg.provider)}</code> instead.</div>`;
+  }finally{clearBusy();}
+}
+$("#runBtn").onclick=()=>{ if(MODE==="agent")runAgent(); else if(MODE==="live")runLive(); else runDemo(); };
+$("#clearBtn").onclick=()=>{ clearBusy(); $("#results").innerHTML=""; };
+
+/* ---- failure record ---- */
+function ocClass(o){return ["LOST","TIPPED_LOST","NO_LANDING_ATTEMPT"].includes(o)?"bad":(o==="TIPPED_SURVIVED"?"part":"ok");}
+function renderRecord(){
+  const fo=$("#fOut").value, fs=$("#fSub").value.toLowerCase(), ft=$("#fTag").value.toLowerCase().trim();
+  let list=DATA.missions.filter(m=>(!fo||m.outcome_class===fo)&&(!fs||m.subsystem.toLowerCase().includes(fs))&&
+    (!ft||m.tags.join(" ").includes(ft)||m.mission.toLowerCase().includes(ft)));
+  list.sort((a,b)=>a.date<b.date?-1:1);
+  let h="";
+  for(const m of list){
+    h+=`<div class="mcard"><div class="mh"><span class="mn">${esc(m.mission)} <span class="when">${esc(m.agency)} · ${m.date}</span></span>
+      <span class="oc ${ocClass(m.outcome_class)}">${esc(m.outcome_class.replace(/_/g," "))}</span></div>
+      <div class="kv"><b>Phase.</b> ${esc(m.phase)}</div>
+      <div class="kv"><b>Subsystem.</b> ${esc(m.subsystem)} &nbsp; <b>Sensor/actuator.</b> ${esc(m.sensor)}</div>
+      <div class="kv"><b>Proximate cause.</b> ${esc(m.proximate)}</div>
+      <div class="kv"><b>${m.outcome_class==="SUCCESS"?"Good practice":"Generalizable weakness"}.</b> ${esc(m.smell)}</div>
+      <div class="quote">${esc(m.quote)}</div>
+      <div class="tags">${m.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
+      <div class="src"><a href="${m.url}" target="_blank">${esc(m.src)}</a> &middot; confidence ${esc(m.conf)}</div>
+    </div>`;
+  }
+  $("#recList").innerHTML=h||`<div class="note">No missions match.</div>`;
+}
+["#fOut","#fSub","#fTag"].forEach(s=>{$(s).oninput=renderRecord;$(s).onchange=renderRecord;});
+
+loadServerConfig().finally(()=>{updateProviderFields(); loadExample(); runDemo(); renderRecord();});
+</script>
+</body>
+</html>
