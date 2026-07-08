@@ -216,6 +216,43 @@
       line-height: 1.45;
     }
     .term strong { display: block; color: var(--ink); margin-bottom: 3px; }
+    .flowchart {
+      margin: 0 0 30px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+    .flowchart h2 {
+      margin: 0 0 6px;
+      font-size: clamp(26px, 3vw, 36px);
+      letter-spacing: -.035em;
+    }
+    .flowchart > p { margin: 0 0 16px; color: var(--muted); max-width: 760px; }
+    .workflow-steps {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+    .flow-step {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 13px;
+      background: #fbfaf6;
+      min-width: 0;
+    }
+    .flow-step strong { display: block; margin-bottom: 4px; }
+    .flow-step p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .flow-arrow {
+      display: grid;
+      place-items: center;
+      color: var(--quiet);
+      font-weight: 900;
+      font-size: 22px;
+      padding: 0 2px;
+    }
 
     .pipeline-layout {
       display: grid;
@@ -329,6 +366,12 @@
     footer { margin-top: 28px; padding: 22px; color: var(--muted); box-shadow: none; }
     footer strong { color: var(--ink); }
 
+    @media (max-width: 1040px) {
+      .workflow-steps { grid-template-columns: 1fr; }
+      .flow-arrow { min-height: 18px; }
+      .flow-arrow::before { content: "↓"; font-size: 22px; }
+      .flow-arrow { font-size: 0; }
+    }
     @media (max-width: 900px) {
       .hero, .section-head, .pipeline-layout, .guardrails { grid-template-columns: 1fr; }
       .stage-detail { position: static; }
@@ -416,6 +459,22 @@
       <div class="term"><strong>ConOps</strong>Concept of operations: how the mission or landing sequence is intended to run.</div>
       <div class="term"><strong>CAST/STPA</strong>Systems-safety methods used here for incident learning and future hazard analysis.</div>
       <div class="term"><strong>SRR/PDR/CDR</strong>Review gates: system requirements, preliminary design, and critical design review.</div>
+    </section>
+
+    <section class="flowchart" aria-labelledby="workflow-heading">
+      <h2 id="workflow-heading">Workflow at a glance</h2>
+      <p>The workflow preserves the evidence chain, retrieves relevant precedents, then asks reviewers for evidence that the future design has handled the same class of risk.</p>
+      <div class="workflow-steps" aria-label="Workflow flow chart">
+        <article class="flow-step"><strong>1. Source</strong><p>Start with reports, disclosures, papers, and technical-cause material.</p></article>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <article class="flow-step"><strong>2. Curate</strong><p>Record authority, caveats, quotes, and validation status.</p></article>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <article class="flow-step"><strong>3. Structure</strong><p>Map claims into case cards, tags, failure classes, and review gates.</p></article>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <article class="flow-step"><strong>4. Retrieve</strong><p>Run deterministic checks to find candidate precedents before LLM review.</p></article>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <article class="flow-step"><strong>5. Question</strong><p>Produce cited concerns and evidence requests for human review.</p></article>
+      </div>
     </section>
 
     <section class="section-head" id="pipeline">
