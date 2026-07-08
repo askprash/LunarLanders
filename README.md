@@ -24,6 +24,15 @@ You paste a descent or landing design description and the tool highlights histor
 
 Each finding is tied back to precedent missions and an explicit mitigation recommendation.
 
+## Method Backbone
+
+The next architecture is organized around Nancy Leveson's STAMP family of systems-safety methods:
+
+- **CAST** structures what we learn from past lunar-landing incidents.
+- **STPA** structures how we red-team future ConOps and design-review packages.
+
+See `docs/methods/stpa-cast.md` and ADR `docs/adr/0001-use-stpa-and-cast-as-method-backbone.md`. The foundational paper is Nancy G. Leveson, ["A New Accident Model for Engineering Safer Systems"](http://sunnyday.mit.edu/accidents/safetyscience-single.pdf), *Safety Science* 42(4), 237–270, 2004.
+
 ## Review Modes
 
 `redteam.py` supports three review modes:
@@ -44,8 +53,10 @@ The code is explicit about the intended tradeoff:
   - review a design
   - browse the failure record
   - inspect how the pipeline works
-- `data/failure_kb.json`: mission records, reusable design checks, and built-in example design texts
+- `data/failure_kb.json`: mission records and reusable design checks
 - `examples/`: six public ConOps/design texts used to stress the matcher on realistic prose
+- `docs/methods/stpa-cast.md`: project framing for STPA/CAST usage
+- `docs/adr/0001-use-stpa-and-cast-as-method-backbone.md`: decision record for adopting STPA/CAST as the method backbone
 - `.gitignore`: Python cache exclusions
 
 ## Quick Start
@@ -68,6 +79,24 @@ MY_MIT_PARLEY_API_KEY=... python3 redteam.py --serve --provider parley
 
 Then open `http://127.0.0.1:8787/`.
 
+## Development Notes
+
+This repository uses [Backlog.md](https://github.com/MrLesk/Backlog.md) for task tracking. Before planning or changing non-trivial work, run:
+
+```bash
+backlog instructions overview
+```
+
+Use the `backlog` CLI to create, update, and complete tasks; do not edit Backlog task files directly. The `.backlog/` directory is intentionally part of the repository and should be committed so collaborators share the same task state.
+
+Project-local Pi skills live under `.pi/skills/` and should also be committed when they encode reusable workflows. The first project skill is:
+
+```text
+/skill:lunar-source-ingestion
+```
+
+Use it when collaborators provide lunar landing/descent PDFs, reports, or source texts that need to be converted into draft failure-memory records or CAST/STPA case-card material.
+
 ## Model Providers
 
 LLM-backed modes read keys from the environment:
@@ -89,11 +118,30 @@ The local server path exists so the browser can call a localhost JSON endpoint a
 
 - mission records with dates, subsystem, proximate cause, generalizable weakness, source URL, confidence, and tags
 - reusable design checks with severity, diagnostic question, keyword signals, precedent missions, and recommended mitigations
-- built-in example design texts for demo and regression use
 
 The emphasis is on reusable engineering lessons rather than generic summaries of lunar missions.
 
 This repository is not just a landing-history dataset. It is a red-team review tool for lunar descent GNC designs, built to compare transparent rule-based matching against a more careful LLM analyst.
+
+## Audience Sequence
+
+The next phase should start as an academic/domain-expert validation effort: test whether the corpus, CAST/STPA framing, hindcast logic, source quality, and review-gate evidence model are credible. Startup engineering teams and technical diligence reviewers are important later audiences, but the method should be validated before it is presented as an operational startup workflow.
+
+Central claim: a source-cited lunar-lander failure memory, structured with CAST/STPA, can generate review-readiness questions that would have surfaced recurring failure classes before later missions repeated them. Those questions must be **precedent-backed**: they should point to past occurrences so reviewers can see why a particular ConOps feature is potentially problematic.
+
+See `docs/adr/0004-start-with-academic-validation-before-startup-use.md`, `docs/research/central-claim.md`, and `docs/research/proposed-domain-expert-review-workflow.md`. The expert-review workflow is only a suggested handoff scaffold; domain experts should change it as needed.
+
+For a concise domain-expert starting point, use `docs/research/expert-handoff-packet.md` rather than asking reviewers to inspect the whole repo. The planned interactive architecture walkthrough should be a standalone static HTML page published by GitHub Actions; see `docs/adr/0009-publish-architecture-walkthrough-as-standalone-html.md`.
+
+## Review Pipeline Direction
+
+The review architecture should use a deterministic sweep before LLM semantic review:
+
+1. Store past occurrences in a structured, queryable failure memory.
+2. Run a deterministic Python pass that retrieves candidate precedents and applies explicit review checks.
+3. Pass the ConOps, deterministic report, and relevant source-backed precedents to an LLM for semantic review, caveat handling, and precedent-backed explanation.
+
+See `docs/architecture/review-pipeline.md` and `docs/adr/0005-use-deterministic-sweep-before-llm-semantic-review.md`.
 
 ## Examples Corpus
 

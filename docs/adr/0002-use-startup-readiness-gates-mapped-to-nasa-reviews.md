@@ -1,0 +1,5 @@
+# Use startup readiness gates mapped to NASA reviews
+
+We will present review readiness through startup-friendly maturity gates while preserving a crosswalk to NASA lifecycle reviews. The product should speak in terms like Concept Readiness, Preliminary Design Readiness, Critical Design Readiness, Integration/Test Readiness, and Flight/Operations Readiness, then map those to NASA gates such as MCR/SRR, PDR, CDR, SIR/TRR/SAR, and ORR/FRR/MRR. This keeps the tool useful for new companies that need evidence maturity without implying they must copy NASA bureaucracy wholesale, while still letting domain experts replace or refine the crosswalk later.
+
+This decision is intentionally provisional because the current project owner is not claiming deep mission-assurance domain authority. Future collaborators with stronger spacecraft review experience should revisit the exact gate names, mappings, and required evidence, but should preserve the underlying product goal: make historical failure lessons actionable as review-ready evidence, not just as generic risk findings.

@@ -1,0 +1,5 @@
+# Use deterministic sweep before LLM semantic review
+
+The review architecture will be split into two stages: first a deterministic sweep over a structured, queryable failure memory, then an LLM semantic review that receives the ConOps, retrieved precedents, and deterministic findings. The deterministic stage should use explicit data fields and rules to surface candidate failure classes, past occurrences, confidence levels, source links, and review-gate evidence requests before the LLM is asked to reason about meaning.
+
+This decision keeps the LLM from being the sole source of risk identification and makes outputs easier to audit. The LLM's role is to read real ConOps prose, resolve vocabulary differences, reduce false positives, explain caveats, and assemble precedent-backed rationale from retrieved evidence. The deterministic layer remains responsible for traceable retrieval and basic matching. Future work should evaluate the best queryable storage format, starting simple with JSON/YAML plus Python indexes before adopting heavier graph or vector infrastructure.
