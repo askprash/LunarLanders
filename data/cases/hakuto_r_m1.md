@@ -5,8 +5,9 @@ company: ispace
 date: 2023-04-25
 outcome_class: LOST
 method_view: CAST incident card + STPA future review check
-primary_source: https://ispace-inc.com/news-en/?p=4691
-supporting_source: https://ispace-inc.com/wp-content/uploads/2023/05/EN_ispace_release_20230506_Final-Results.pdf
+source_type: official company technical-cause analysis / results disclosure
+primary_source: https://www2.jpx.co.jp/disc/93480/140120230526584183.pdf
+supporting_source: https://ispace-inc.com/news-en/?p=4691
 confidence: HIGH
 failure_classes:
   - terrain-unaware outlier rejection
@@ -27,9 +28,11 @@ review_gate_focus:
 
 ## Evidence layer — what happened
 
-During terminal/vertical descent, the lander crossed the rim of Atlas crater. The laser altimeter reported a large altitude change that was consistent with the terrain, but the onboard filter classified the measurement as anomalous and rejected it. The lander continued with an internal altitude estimate near zero while true altitude was several kilometers, exhausted propellant, and impacted the Moon.
+During terminal/vertical descent, the lander crossed a crater-rim feature described in the official ispace/Tokyo Stock Exchange disclosure as a roughly 3 km height difference. The onboard sensor-reported altitude rose rapidly, but the software apparently judged the divergence from the pre-set estimated altitude as a sensor anomaly and blocked measured altitude information. The lander continued with an internal altitude estimate near zero while true altitude was about 5 km, exhausted propellant, and is believed to have free-fallen to the Moon.
 
-The landing site had changed after CDR, and the new terrain corridor was not adequately represented in the validation cases.
+The landing site had changed after CDR, and ispace stated that although many simulations were performed, verification was not sufficient to discover the issue caused by that change.
+
+_Caveat_: this card uses official company analysis / exchange disclosure as the highest-authority public source currently identified. It is not an independent accident investigation report.
 
 ## CAST reading — how the control structure failed
 

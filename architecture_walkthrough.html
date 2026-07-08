@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lunar Lander Failure-Memory Walkthrough</title>
+  <meta name="description" content="Interactive architecture walkthrough for a CAST/STPA lunar lander failure-memory and AI review-readiness coach." />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --bg2: #0c1830;
+      --panel: rgba(255,255,255,.08);
+      --panel2: rgba(255,255,255,.12);
+      --ink: #eef6ff;
+      --muted: #aebdd2;
+      --soft: #7890ad;
+      --line: rgba(174, 208, 255, .22);
+      --blue: #6eb6ff;
+      --cyan: #7df5ff;
+      --green: #98f5ba;
+      --amber: #ffd36e;
+      --red: #ff8c8c;
+      --purple: #c6a6ff;
+      --radius: 22px;
+      --shadow: 0 24px 80px rgba(0,0,0,.36);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(109,182,255,.34), transparent 32rem),
+        radial-gradient(circle at 80% 10%, rgba(125,245,255,.16), transparent 28rem),
+        linear-gradient(180deg, var(--bg), #050914 70%);
+    }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 20px 56px; }
+    header.hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
+      gap: 28px;
+      align-items: stretch;
+      margin-bottom: 28px;
+    }
+    .hero-card, .side-card, .panel, .stage, .detail-card, footer {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--panel2), rgba(255,255,255,.055));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      border-radius: var(--radius);
+    }
+    .hero-card { padding: 34px; position: relative; overflow: hidden; }
+    .hero-card::after {
+      content: "";
+      position: absolute; inset: auto -80px -110px auto;
+      width: 300px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(125,245,255,.18), transparent 65%);
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--green); font-weight: 700; font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 99px; background: var(--green); box-shadow: 0 0 20px var(--green); }
+    h1 { font-size: clamp(34px, 5vw, 64px); line-height: .96; margin: 0 0 18px; letter-spacing: -.045em; }
+    .lede { color: var(--muted); font-size: 18px; line-height: 1.65; max-width: 760px; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 44px; padding: 0 16px; border-radius: 999px;
+      background: rgba(110,182,255,.16); border: 1px solid rgba(110,182,255,.35); color: var(--ink);
+      font-weight: 700;
+    }
+    .button.primary { background: linear-gradient(135deg, rgba(110,182,255,.92), rgba(125,245,255,.64)); color: #061120; border: 0; }
+    .side-card { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .source-box {
+      padding: 18px; border-radius: 18px; background: rgba(0,0,0,.18); border: 1px solid var(--line);
+    }
+    .label {
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px;
+      font-size: 12px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
+      background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.14); color: var(--muted);
+    }
+    .label.official { color: var(--green); background: rgba(152,245,186,.12); border-color: rgba(152,245,186,.28); }
+    .label.claim { color: var(--amber); background: rgba(255,211,110,.12); border-color: rgba(255,211,110,.28); }
+    .label.example { color: var(--purple); background: rgba(198,166,255,.12); border-color: rgba(198,166,255,.28); }
+    .label.coach { color: var(--cyan); background: rgba(125,245,255,.1); border-color: rgba(125,245,255,.28); }
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; line-height: 1.5; }
+    .section-title { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin: 30px 0 16px; }
+    .section-title h2 { font-size: clamp(26px, 3vw, 38px); margin: 0; letter-spacing: -.03em; }
+    .section-title p { max-width: 560px; margin: 0; color: var(--muted); line-height: 1.6; }
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      position: relative;
+    }
+    .stage {
+      min-height: 170px;
+      padding: 18px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .stage:hover, .stage.active { transform: translateY(-4px); border-color: rgba(125,245,255,.6); background: linear-gradient(180deg, rgba(125,245,255,.12), rgba(255,255,255,.065)); }
+    .stage:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+    .stage .num { color: var(--soft); font-weight: 800; font-size: 13px; }
+    .stage h3 { margin: 14px 0 10px; font-size: 20px; letter-spacing: -.02em; }
+    .stage p { margin: 0; color: var(--muted); line-height: 1.45; font-size: 14px; }
+    .stage .label { position: absolute; bottom: 14px; left: 14px; right: 14px; width: fit-content; }
+    .stage::after {
+      content: "→";
+      position: absolute; right: 14px; top: 12px; color: rgba(125,245,255,.45); font-size: 24px; font-weight: 900;
+    }
+    .stage:nth-child(4)::after, .stage:nth-child(8)::after { content: ""; }
+    .details { margin-top: 18px; display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 16px; }
+    .detail-card { padding: 24px; min-height: 330px; }
+    .detail-card h3 { margin: 0 0 10px; font-size: 28px; letter-spacing: -.03em; }
+    .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; margin-top: 16px; }
+    .mini { padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: rgba(0,0,0,.16); }
+    .mini strong { display: block; margin-bottom: 6px; color: var(--ink); }
+    .mini p, .mini ul { margin: 0; color: var(--muted); line-height: 1.5; font-size: 14px; }
+    ul { padding-left: 20px; }
+    .quote {
+      padding: 18px; border-left: 3px solid var(--cyan); background: rgba(125,245,255,.08); border-radius: 14px; color: var(--muted); line-height: 1.55;
+    }
+    .rail { display: flex; flex-direction: column; gap: 14px; }
+    .rail .panel { padding: 18px; box-shadow: none; }
+    .rail h4 { margin: 0 0 8px; }
+    .guardrails { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
+    .guardrails .panel { padding: 22px; box-shadow: none; }
+    .ok h3 { color: var(--green); }
+    .no h3 { color: var(--red); }
+    .limitations { margin-top: 34px; padding: 22px; border-radius: 18px; border: 1px solid rgba(255,255,255,.11); background: rgba(255,255,255,.045); color: var(--soft); }
+    .limitations summary { cursor: pointer; color: var(--muted); font-weight: 800; }
+    footer { margin-top: 26px; padding: 22px; color: var(--muted); box-shadow: none; }
+    .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    @media (max-width: 900px) {
+      header.hero, .details, .guardrails { grid-template-columns: 1fr; }
+      .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stage:nth-child(4)::after { content: "→"; }
+      .stage:nth-child(2)::after, .stage:nth-child(4)::after, .stage:nth-child(6)::after, .stage:nth-child(8)::after { content: ""; }
+    }
+    @media (max-width: 560px) {
+      .wrap { padding: 18px 12px 40px; }
+      .hero-card { padding: 24px; }
+      .pipeline, .detail-grid { grid-template-columns: 1fr; }
+      .stage::after { content: "↓" !important; }
+      .stage:nth-child(8)::after { content: "" !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <section class="hero-card">
+        <div class="eyebrow">Interactive architecture walkthrough</div>
+        <h1>From lunar landing history to review-ready questions.</h1>
+        <p class="lede">This page explains a proposed AI-assisted pipeline for converting source-cited lunar lander failures into CAST/STPA case cards, deterministic precedent retrieval, and LLM-assisted review-readiness coaching.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#pipeline">Explore the pipeline</a>
+          <a class="button" href="https://github.com/askprash/LunarLanders/blob/main/docs/research/expert-handoff-packet.md">Expert handoff packet</a>
+          <a class="button" href="demo.html">Open prototype demo</a>
+        </div>
+      </section>
+      <aside class="side-card">
+        <span class="label official">Running example</span>
+        <h2 style="margin:0; letter-spacing:-.03em;">Hakuto‑R Mission 1</h2>
+        <p class="muted" style="line-height:1.6; margin:0;">The walkthrough uses Hakuto‑R M1 because the public source record contains a concrete, review-worthy chain: crater-rim terrain → unexpected altitude measurement → software rejection → stale altitude estimate → propellant exhaustion.</p>
+        <div class="source-box small">
+          <strong>Source caveat:</strong> the strongest public source currently identified is an official ispace/company results and technical-cause disclosure, mirrored through Tokyo Stock Exchange disclosure. It is not an independent accident investigation report.
+        </div>
+        <a href="https://www2.jpx.co.jp/disc/93480/140120230526584183.pdf">Official disclosure PDF →</a>
+      </aside>
+    </header>
+
+    <section class="section-title" id="pipeline">
+      <div>
+        <h2>Click through the pipeline</h2>
+      </div>
+      <p>Each block shows an artifact maturity label. Those labels are deliberate: they help reviewers distinguish source evidence, extracted claims, draft interpretation, deterministic matching, and LLM synthesis.</p>
+    </section>
+
+    <section class="pipeline" aria-label="Architecture pipeline">
+      <button class="stage active" data-stage="source"><span class="num">01</span><h3>Source corpus</h3><p>Authoritative lunar landing sources, starting with the official Hakuto‑R M1 disclosure.</p><span class="label official">official source</span></button>
+      <button class="stage" data-stage="inventory"><span class="num">02</span><h3>Source inventory</h3><p>Record source type, authority, relevant claims, limitations, and missing reports.</p><span class="label">curation artifact</span></button>
+      <button class="stage" data-stage="claims"><span class="num">03</span><h3>Extracted claims</h3><p>Atomic source-backed claims with quotes, caveats, and confidence.</p><span class="label claim">extracted claim</span></button>
+      <button class="stage" data-stage="cards"><span class="num">04</span><h3>Case cards</h3><p>CAST/STPA narrative assembled only when source evidence is strong enough.</p><span class="label claim">draft / curated</span></button>
+      <button class="stage" data-stage="memory"><span class="num">05</span><h3>Queryable memory</h3><p>Structured fields for failure classes, precedents, tags, review gates, and sources.</p><span class="label">retrieval layer</span></button>
+      <button class="stage" data-stage="sweep"><span class="num">06</span><h3>Deterministic sweep</h3><p>Auditable Python/rules pass retrieves candidate precedents before any LLM reasoning.</p><span class="label example">example match</span></button>
+      <button class="stage" data-stage="llm"><span class="num">07</span><h3>LLM semantic review</h3><p>Reads real ConOps prose against retrieved precedents and deterministic findings.</p><span class="label example">LLM interpretation</span></button>
+      <button class="stage" data-stage="readiness"><span class="num">08</span><h3>Readiness gaps</h3><p>Evidence requests and cited red-team concerns for human reviewers.</p><span class="label coach">review coaching</span></button>
+    </section>
+
+    <section class="details" aria-live="polite">
+      <article class="detail-card" id="detail"></article>
+      <aside class="rail">
+        <div class="panel">
+          <h4>Central claim</h4>
+          <p class="small muted">A source-cited lunar-lander failure memory, structured with CAST/STPA, can generate review-readiness questions that would have surfaced recurring failure classes before later missions repeated them.</p>
+          <a class="small" href="https://github.com/askprash/LunarLanders/blob/main/docs/research/central-claim.md">Read the claim →</a>
+        </div>
+        <div class="panel">
+          <h4>Not certification</h4>
+          <p class="small muted">The output is a review-readiness coaching artifact. It does not certify a design, approve flight readiness, or replace domain experts.</p>
+          <a class="small" href="https://github.com/askprash/LunarLanders/blob/main/docs/adr/0003-position-as-review-readiness-coach-not-certification-tool.md">ADR 0003 →</a>
+        </div>
+        <div class="panel">
+          <h4>Method backbone</h4>
+          <p class="small muted">CAST structures what we learn from incidents. STPA turns that learning into future hazards, unsafe control actions, constraints, and evidence requests.</p>
+          <a class="small" href="https://github.com/askprash/LunarLanders/blob/main/docs/methods/stpa-cast.md">Method notes →</a>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section-title">
+      <div><h2>LLM boundary</h2></div>
+      <p>The LLM is useful, but it is not the source of truth. It receives retrieved evidence and a deterministic report, then helps with semantic interpretation and explanation.</p>
+    </section>
+    <section class="guardrails">
+      <div class="panel ok">
+        <h3>Allowed</h3>
+        <ul class="muted">
+          <li>Interpret realistic ConOps prose and vocabulary variation.</li>
+          <li>Compare the ConOps to retrieved precedents.</li>
+          <li>Explain caveats and proximate-cause differences.</li>
+          <li>Reject weak deterministic matches.</li>
+          <li>Turn supported concerns into readiness gaps and evidence requests.</li>
+        </ul>
+      </div>
+      <div class="panel no">
+        <h3>Not allowed</h3>
+        <ul class="muted">
+          <li>Invent precedents, sources, quotes, or mission facts.</li>
+          <li>Silently upgrade confidence.</li>
+          <li>Claim certification, compliance, or flight readiness.</li>
+          <li>Erase important differences in proximate cause.</li>
+          <li>Treat absence of mitigation in the supplied text as proof of risk.</li>
+        </ul>
+      </div>
+    </section>
+
+    <details class="limitations">
+      <summary>Limitations and pipeline failure modes</summary>
+      <p>This walkthrough is intentionally optimistic about how AI can help, but the method can fail. The source corpus may be weak, secondary, incomplete, or not authoritative. Extraction quotes or page references may be wrong. A failure class may be overgeneralized across missions with different proximate causes. Deterministic matching can miss paraphrases or create brittle keyword matches. The LLM can overstate confidence or interpret beyond retrieved evidence. A reader may mistake review-readiness coaching for certification.</p>
+      <p>Those risks are why the architecture preserves sources, caveats, artifact maturity labels, deterministic retrieval, and human/domain-expert review.</p>
+    </details>
+
+    <footer>
+      <strong>Lunar Landers failure-memory prototype</strong>
+      <p class="small">Static expert-onboarding walkthrough. Built to invite domain review of the method before operational startup use.</p>
+      <div class="links small">
+        <a href="https://github.com/askprash/LunarLanders">Repository</a>
+        <a href="https://github.com/askprash/LunarLanders/blob/main/docs/research/hakuto-r-m1-source-inventory.md">Hakuto‑R M1 source inventory</a>
+        <a href="https://github.com/askprash/LunarLanders/blob/main/data/cases/hakuto_r_m1.md">Hakuto‑R M1 case card</a>
+        <a href="https://github.com/askprash/LunarLanders/blob/main/docs/architecture/review-pipeline.md">Pipeline architecture</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const repo = "https://github.com/askprash/LunarLanders/blob/main/";
+    const stages = {
+      source: {
+        title: "Source corpus",
+        label: "official source",
+        body: "Start with authoritative lunar landing/descent sources. For Hakuto‑R M1, the strongest public source currently identified is the official ispace results / technical-cause release, mirrored as a Tokyo Stock Exchange disclosure PDF.",
+        input: "Downloaded PDFs, reports, official releases, technical-cause analyses.",
+        output: "A source with authority level and caveats, ready for inventory.",
+        human: "Curator verifies source provenance and avoids relying on magazine-style summaries for technical claims.",
+        risk: "The source may be company-authored rather than independent, or the public record may omit internal evidence.",
+        example: "Official ispace/TSE disclosure says the lander judged estimated altitude as zero while true altitude was about 5 km.",
+        links: [["TSE disclosure PDF", "https://www2.jpx.co.jp/disc/93480/140120230526584183.pdf"], ["Source inventory", repo + "docs/research/hakuto-r-m1-source-inventory.md"]]
+      },
+      inventory: {
+        title: "Source inventory",
+        label: "curation artifact",
+        body: "The inventory records what each source is, how authoritative it is, what it can support, and what it cannot support. It also states whether an independent accident report exists.",
+        input: "Official PDF/release plus any supporting reports or secondary context.",
+        output: "Source table with authority level, use, notes, and caveats.",
+        human: "Non-domain maintainers can curate source traceability; domain experts can later judge technical adequacy.",
+        risk: "A source inventory can look complete while still missing important inaccessible or non-public reports.",
+        example: "For Hakuto‑R M1, no independent public mishap report was found in this pass; use official company disclosure with caveats.",
+        links: [["Hakuto‑R M1 inventory", repo + "docs/research/hakuto-r-m1-source-inventory.md"]]
+      },
+      claims: {
+        title: "Extracted claims",
+        label: "extracted claim",
+        body: "Claims are atomic source-backed statements. They are not yet accepted facts or generalized lessons; they preserve quotes, confidence, and caveats.",
+        input: "Source inventory and extracted source text.",
+        output: "Claim list with source, quote/page or section, confidence, and caveat.",
+        human: "Curator checks quote accuracy and whether the claim is actually supported by the source.",
+        risk: "Extraction can misquote, mistranslate, over-compress, or drop uncertainty.",
+        example: "Claim: the software apparently treated the large divergence between measured and pre-set estimated altitude as a sensor anomaly and blocked measured altitude information.",
+        links: [["Ingestion skill", repo + ".pi/skills/lunar-source-ingestion/SKILL.md"]]
+      },
+      cards: {
+        title: "Case cards",
+        label: "draft / curated-not-domain-validated",
+        body: "A case card assembles source-backed claims into a CAST reading of the past event and an STPA-derived future review check. Draft cards are not domain-validated unless explicitly labeled so.",
+        input: "Strong extracted claims and source inventory.",
+        output: "Human-readable CAST/STPA case card.",
+        human: "Domain experts judge whether the failure-class abstraction and STPA/CAST mapping are technically credible.",
+        risk: "The card may overgeneralize a proximate cause into a misleading failure class.",
+        example: "Hakuto‑R M1 failure class: terrain-unaware altitude outlier rejection plus post-CDR landing-site change revalidation gap.",
+        links: [["Hakuto‑R M1 card", repo + "data/cases/hakuto_r_m1.md"], ["Validation workflow ADR", repo + "docs/adr/0008-separate-curation-approval-from-domain-validation.md"]]
+      },
+      memory: {
+        title: "Queryable failure memory",
+        label: "structured retrieval layer",
+        body: "The case material becomes structured fields that can be queried before an LLM is called: mission, source, confidence, failure class, tags, review gates, precedents, and design checks.",
+        input: "Curated case cards and structured KB entries.",
+        output: "Queryable JSON/YAML/Markdown records and generated indexes.",
+        human: "Maintainers preserve source links and validation status; future work can scale retrieval without losing auditability.",
+        risk: "A vector or graph system can hide the evidence chain if retrieved chunks are not tied to named events and sources.",
+        example: "Tags: altimetry, outlier_rejection, terrain_model_mismatch, post_cdr_change, no_graceful_degradation.",
+        links: [["failure_kb.json", repo + "data/failure_kb.json"], ["Review pipeline", repo + "docs/architecture/review-pipeline.md"]]
+      },
+      sweep: {
+        title: "Deterministic sweep",
+        label: "example deterministic match",
+        body: "A reproducible Python/rules pass retrieves candidate precedents and basic review checks before any LLM interpretation. This makes the first pass auditable.",
+        input: "ConOps text plus queryable failure memory.",
+        output: "Candidate failure classes, named precedents, source links, confidence, caveats, and review-gate evidence requests.",
+        human: "Reviewers can inspect why a candidate match fired and whether it is too brittle or too broad.",
+        risk: "Keyword and rule matching may miss paraphrases or mistake a word for a real mitigation.",
+        example: "A future ConOps mentioning hard rejection of surprising altitude readings near terminal descent retrieves Hakuto‑R M1 as a precedent.",
+        links: [["redteam.py", repo + "redteam.py"], ["Examples README", repo + "examples/README.md"]]
+      },
+      llm: {
+        title: "LLM semantic review",
+        label: "example LLM interpretation",
+        body: "The LLM reads the ConOps, the deterministic report, and retrieved precedents. It helps interpret realistic prose and explain rationale, but it must not invent evidence.",
+        input: "ConOps excerpt, deterministic sweep report, and retrieved source-backed precedents.",
+        output: "Caveated, precedent-backed concerns and evidence requests.",
+        human: "Humans audit whether the LLM respected sources, caveats, confidence, and review-readiness posture.",
+        risk: "The LLM may overstate confidence, erase proximate-cause differences, or infer risk from missing text.",
+        example: "It can explain why terrain-aware filter validation is a CDR evidence request, while noting Hakuto‑R M1 was a company-analyzed case rather than independent mishap report.",
+        links: [["LLM architecture ADR", repo + "docs/adr/0005-use-deterministic-sweep-before-llm-semantic-review.md"]]
+      },
+      readiness: {
+        title: "Readiness gaps and evidence requests",
+        label: "review-readiness coaching",
+        body: "The final output is framed as reviewer questions and evidence gaps, not a pass/fail judgment. It helps teams prepare for review gates and helps experts focus attention.",
+        input: "Supported findings from deterministic and semantic review.",
+        output: "Readiness gaps, evidence requests, cited red-team concerns, caveats, and open questions.",
+        human: "Qualified reviewers, customers, regulators, and mission-assurance authorities retain final judgment.",
+        risk: "Readers may mistake coaching for certification unless the page and reports say otherwise.",
+        example: "CDR evidence gap: show terrain-aware altitude-filter validation against the actual landing corridor and regression evidence for post-CDR landing-site changes.",
+        links: [["Review-readiness ADR", repo + "docs/adr/0003-position-as-review-readiness-coach-not-certification-tool.md"], ["Startup/NASA gate crosswalk ADR", repo + "docs/adr/0002-use-startup-readiness-gates-mapped-to-nasa-reviews.md"]]
+      }
+    };
+
+    const detail = document.getElementById('detail');
+    const buttons = document.querySelectorAll('.stage');
+
+    function render(key) {
+      const s = stages[key];
+      detail.innerHTML = `
+        <span class="label ${s.label.includes('official') ? 'official' : s.label.includes('claim') || s.label.includes('draft') ? 'claim' : s.label.includes('example') || s.label.includes('LLM') ? 'example' : s.label.includes('coaching') ? 'coach' : ''}">${s.label}</span>
+        <h3>${s.title}</h3>
+        <p class="muted" style="line-height:1.65">${s.body}</p>
+        <div class="detail-grid">
+          <div class="mini"><strong>Consumes</strong><p>${s.input}</p></div>
+          <div class="mini"><strong>Produces</strong><p>${s.output}</p></div>
+          <div class="mini"><strong>Human / expert role</strong><p>${s.human}</p></div>
+          <div class="mini"><strong>What can go wrong</strong><p>${s.risk}</p></div>
+        </div>
+        <p class="quote" style="margin-top:16px"><strong>Hakuto‑R M1 example:</strong> ${s.example}</p>
+        <div class="links small">${s.links.map(([text, href]) => `<a href="${href}">${text} →</a>`).join('')}</div>
+      `;
+      buttons.forEach(b => b.classList.toggle('active', b.dataset.stage === key));
+    }
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => render(button.dataset.stage));
+      button.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          render(button.dataset.stage);
+        }
+      });
+    });
+    render('source');
+  </script>
+</body>
+</html>

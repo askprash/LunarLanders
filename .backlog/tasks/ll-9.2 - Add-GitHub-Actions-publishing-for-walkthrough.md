@@ -1,9 +1,11 @@
 ---
 id: LL-9.2
 title: Add GitHub Actions publishing for walkthrough
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@pi'
 created_date: '2026-07-08 15:19'
+updated_date: '2026-07-08 15:52'
 labels:
   - github-actions
   - documentation
@@ -24,8 +26,26 @@ Add a GitHub Actions workflow that builds or publishes the standalone walkthroug
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Workflow runs on pushes or manual dispatch
-- [ ] #2 Workflow publishes the standalone walkthrough page and required static assets
-- [ ] #3 README or expert handoff packet documents where reviewers can find the published page
-- [ ] #4 Workflow does not require secrets for normal public-page publishing
+- [x] #1 Workflow runs on pushes or manual dispatch
+- [x] #2 Workflow publishes the standalone walkthrough page and required static assets
+- [x] #3 README or expert handoff packet documents where reviewers can find the published page
+- [x] #4 Workflow does not require secrets for normal public-page publishing
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Add GitHub Actions workflow for GitHub Pages static deployment.\n2. Include standalone walkthrough and demo page in the published site.\n3. Document GitHub Pages URL pattern in README/expert handoff packet.\n4. Validate workflow YAML syntax by inspection and smoke-test local files.
+<!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Added .github/workflows/pages.yml using configure-pages, upload-pages-artifact, and deploy-pages. The workflow runs on push to main and workflow_dispatch, builds _site/index.html from architecture_walkthrough.html, and publishes lunar_redteam_demo.html as demo.html. README and expert handoff packet document the Pages URL pattern. Validation: workflow contains deploy-pages; python3 redteam.py smoke test passed.
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Added GitHub Pages workflow to publish the standalone walkthrough and demo as a static site without secrets.
+<!-- SECTION:FINAL_SUMMARY:END -->

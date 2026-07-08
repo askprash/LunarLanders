@@ -55,6 +55,8 @@ The code is explicit about the intended tradeoff:
   - inspect how the pipeline works
 - `data/failure_kb.json`: mission records and reusable design checks
 - `examples/`: six public ConOps/design texts used to stress the matcher on realistic prose
+- `architecture_walkthrough.html`: standalone interactive architecture walkthrough for expert onboarding
+- `.github/workflows/pages.yml`: GitHub Pages publishing workflow for the walkthrough and demo
 - `docs/methods/stpa-cast.md`: project framing for STPA/CAST usage
 - `docs/adr/0001-use-stpa-and-cast-as-method-backbone.md`: decision record for adopting STPA/CAST as the method backbone
 - `.gitignore`: Python cache exclusions
@@ -97,6 +99,11 @@ Project-local Pi skills live under `.pi/skills/` and should also be committed wh
 
 Use it when collaborators provide lunar landing/descent PDFs, reports, or source texts that need to be converted into draft failure-memory records or CAST/STPA case-card material.
 
+The standalone architecture walkthrough is published by GitHub Actions / GitHub Pages. Once Pages is enabled for this repository, reviewers should be able to open:
+
+- `https://askprash.github.io/LunarLanders/` — interactive architecture walkthrough
+- `https://askprash.github.io/LunarLanders/demo.html` — original browser demo
+
 ## Model Providers
 
 LLM-backed modes read keys from the environment:
@@ -131,7 +138,7 @@ Central claim: a source-cited lunar-lander failure memory, structured with CAST/
 
 See `docs/adr/0004-start-with-academic-validation-before-startup-use.md`, `docs/research/central-claim.md`, and `docs/research/proposed-domain-expert-review-workflow.md`. The expert-review workflow is only a suggested handoff scaffold; domain experts should change it as needed.
 
-For a concise domain-expert starting point, use `docs/research/expert-handoff-packet.md` rather than asking reviewers to inspect the whole repo. The planned interactive architecture walkthrough should be a standalone static HTML page published by GitHub Actions; see `docs/adr/0009-publish-architecture-walkthrough-as-standalone-html.md`.
+For a concise domain-expert starting point, use `docs/research/expert-handoff-packet.md` rather than asking reviewers to inspect the whole repo. The interactive architecture walkthrough is a standalone static HTML page published by GitHub Actions; see `architecture_walkthrough.html` and `docs/adr/0009-publish-architecture-walkthrough-as-standalone-html.md`.
 
 ## Review Pipeline Direction
 

@@ -9,14 +9,17 @@ This is the concise starting packet for spacecraft systems, GNC, mission-assuran
 3. `docs/research/proposed-domain-expert-review-workflow.md` — optional review scaffold; experts should change it as needed.
 4. `docs/methods/stpa-cast.md` — how this project uses STPA/CAST.
 5. `data/cases/hakuto_r_m1.md` — first pilot CAST/STPA case card.
-6. `docs/product/interactive-architecture-walkthrough.md` — planned interactive walkthrough of the pipeline.
+6. `architecture_walkthrough.html` — standalone interactive walkthrough of the pipeline.
+7. `docs/product/interactive-architecture-walkthrough.md` — design notes for the walkthrough.
+
+When GitHub Pages is enabled, the walkthrough should be available at `https://askprash.github.io/LunarLanders/`.
 
 ## Add When Ready
 
 - 2–4 additional draft case cards from `data/cases/` or `data/drafts/`.
 - A source inventory from the lunar-only authoritative corpus expansion.
 - A hindcast narrative showing how a past failure class could have been surfaced before a later mission repeated it.
-- A rendered interactive walkthrough where reviewers can click through each pipeline stage and read concise explanations.
+- Additional walkthrough iterations as reviewers identify clearer terminology, missing stages, or better examples.
 
 ## Questions for Reviewers
 
