@@ -11,7 +11,12 @@ sandbox/
 __pycache__/
 *.py[cod]
 
+# Local Python environments
+.venv/
+venv/
+
 # Common local tool caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.uv-cache/

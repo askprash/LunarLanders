@@ -76,10 +76,10 @@ Tailor NASA-style rigor to mission class and customer expectations; do not copy 
 After logic or data changes, run at least:
 
 ```bash
-python3 redteam.py
-python3 redteam.py examples/teamindus_arxiv.txt
-python3 redteam.py examples/lunar_pallet_lander_NTRS.txt
-python3 redteam.py examples/polito_thesis.txt
+uv run redteam.py
+uv run redteam.py examples/teamindus_arxiv.txt
+uv run redteam.py examples/lunar_pallet_lander_NTRS.txt
+uv run redteam.py examples/polito_thesis.txt
 ```
 
 If LLM keys are available, also run representative `--agent` checks because agent mode is intended for real ConOps text.
@@ -94,7 +94,7 @@ Expected regression themes from `examples/README.md`:
 ## Safety, Secrets, and Provider Handling
 
 - Do not put API keys in files, examples, screenshots, or browser-side defaults.
-- Prefer `python3 redteam.py --serve --provider parley` or another local-server flow so keys stay in environment variables.
+- Prefer `uv run redteam.py --serve --provider parley` or another local-server flow so keys stay in environment variables.
 - Supported key env vars are documented in `README.md` and `redteam.py`.
 
 ## Documentation Discipline

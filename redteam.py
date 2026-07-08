@@ -13,13 +13,13 @@ Three modes:
                          This is the mode intended for real ConOps text.
 
 Usage:
-  python3 redteam.py                            # keyword mode on the built-in example
-  python3 redteam.py design.txt                 # keyword mode on your file
-  python3 redteam.py design.txt --llm           # quick one-pass LLM mode
-  python3 redteam.py design.txt --agent         # multi-pass LLM agent mode
-  python3 redteam.py design.txt --agent --provider openai --model gpt-4o-mini
-  python3 redteam.py design.txt --agent --provider parley --model openai/gpt-5-mini
-  python3 redteam.py --serve --provider parley  # local HTML UI; key stays in env
+  uv run redteam.py                            # keyword mode on the built-in example
+  uv run redteam.py design.txt                 # keyword mode on your file
+  uv run redteam.py design.txt --llm           # quick one-pass LLM mode
+  uv run redteam.py design.txt --agent         # multi-pass LLM agent mode
+  uv run redteam.py design.txt --agent --provider openai --model gpt-4o-mini
+  uv run redteam.py design.txt --agent --provider parley --model openai/gpt-5-mini
+  uv run redteam.py --serve --provider parley  # local HTML UI; key stays in env
 
 Keys (LLM/agent modes), read from the environment:
   ANTHROPIC_API_KEY        (provider anthropic; agent default claude-3-5-haiku-latest)

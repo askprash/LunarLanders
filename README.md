@@ -59,24 +59,39 @@ The code is explicit about the intended tradeoff:
 - `.github/workflows/pages.yml`: GitHub Pages publishing workflow for the walkthrough and demo
 - `docs/methods/stpa-cast.md`: project framing for STPA/CAST usage
 - `docs/adr/0001-use-stpa-and-cast-as-method-backbone.md`: decision record for adopting STPA/CAST as the method backbone
-- `.gitignore`: Python cache exclusions
+- `pyproject.toml`, `uv.lock`, `.python-version`: `uv` environment metadata
+- `.gitignore`: Python cache and local environment exclusions
 
 ## Quick Start
 
-No third-party Python packages are required.
+This repository uses [`uv`](https://docs.astral.sh/uv/) for Python environment management. No third-party Python packages are required today, but using `uv` keeps the Python version and lockfile workflow consistent for collaborators.
+
+Install `uv` if needed:
 
 ```bash
-python3 redteam.py
-python3 redteam.py design.txt
-python3 redteam.py examples/teamindus_arxiv.txt
-python3 redteam.py design.txt --agent
-python3 redteam.py design.txt --llm
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Create or refresh the local environment:
+
+```bash
+uv sync
+```
+
+Run the reviewer through the managed environment:
+
+```bash
+uv run redteam.py
+uv run redteam.py design.txt
+uv run redteam.py examples/teamindus_arxiv.txt
+uv run redteam.py design.txt --agent
+uv run redteam.py design.txt --llm
 ```
 
 To run the local UI without exposing API keys to the browser:
 
 ```bash
-MY_MIT_PARLEY_API_KEY=... python3 redteam.py --serve --provider parley
+MY_MIT_PARLEY_API_KEY=... uv run redteam.py --serve --provider parley
 ```
 
 Then open `http://127.0.0.1:8787/`.
@@ -141,7 +156,7 @@ export MY_MIT_PARLEY_API_KEY="YOUR_PARLEY_KEY_HERE"
 Then run the local server so the browser talks only to `localhost` and never sees the key directly:
 
 ```bash
-python3 redteam.py --serve --provider parley
+uv run redteam.py --serve --provider parley
 ```
 
 Open `http://127.0.0.1:8787/` and select the local-server option in the UI.
@@ -150,7 +165,7 @@ Safety checks before committing or pushing:
 
 ```bash
 # Confirm the key is available locally.
-python3 - <<'PY'
+uv run python - <<'PY'
 import os
 print('Parley key configured:', bool(os.environ.get('MY_MIT_PARLEY_API_KEY')))
 PY

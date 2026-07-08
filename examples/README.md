@@ -2,19 +2,19 @@
 
 Six genuinely public lunar-lander descent/landing GNC descriptions, extracted as faithful close-paraphrases for testing the design-review tool. Each `.txt` is a paste-in design text; the header line in each file carries the citation and URL.
 
-Run any of them:
+Run any of them through the repository's `uv` environment:
 
 ```
-python3 redteam.py examples/teamindus_arxiv.txt            # Demo (offline keyword)
-python3 redteam.py examples/teamindus_arxiv.txt --agent    # Agent mode (auto-detects your API key)
-python3 redteam.py examples/teamindus_arxiv.txt --agent --provider parley --model openai/gpt-5-mini
-python3 redteam.py examples/teamindus_arxiv.txt --llm      # Single-pass LLM mode
+uv run redteam.py examples/teamindus_arxiv.txt            # Demo (offline keyword)
+uv run redteam.py examples/teamindus_arxiv.txt --agent    # Agent mode (auto-detects your API key)
+uv run redteam.py examples/teamindus_arxiv.txt --agent --provider parley --model openai/gpt-5-mini
+uv run redteam.py examples/teamindus_arxiv.txt --llm      # Single-pass LLM mode
 ```
 
 or run the local HTML server so the browser never sees your key:
 
 ```
-MY_MIT_PARLEY_API_KEY=... python3 redteam.py --serve --provider parley
+MY_MIT_PARLEY_API_KEY=... uv run redteam.py --serve --provider parley
 # open http://127.0.0.1:8787/ and select Local server (env key)
 ```
 
