@@ -119,6 +119,48 @@ Parley aliases are also supported:
 
 The local server path exists so the browser can call a localhost JSON endpoint and keep the actual provider key in the Python process environment.
 
+### Safe local Parley key setup
+
+Do **not** paste API keys into source files, notebooks, screenshots, committed docs, or browser-side configuration. Keep keys only in your local shell environment.
+
+Recommended one-time setup for macOS/Linux with `zsh`:
+
+```bash
+# Replace the placeholder with your actual Parley key.
+# Do not include spaces around the equals sign.
+echo 'export MY_MIT_PARLEY_API_KEY="YOUR_PARLEY_KEY_HERE"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+For a single terminal session only:
+
+```bash
+export MY_MIT_PARLEY_API_KEY="YOUR_PARLEY_KEY_HERE"
+```
+
+Then run the local server so the browser talks only to `localhost` and never sees the key directly:
+
+```bash
+python3 redteam.py --serve --provider parley
+```
+
+Open `http://127.0.0.1:8787/` and select the local-server option in the UI.
+
+Safety checks before committing or pushing:
+
+```bash
+# Confirm the key is available locally.
+python3 - <<'PY'
+import os
+print('Parley key configured:', bool(os.environ.get('MY_MIT_PARLEY_API_KEY')))
+PY
+
+# Confirm no API key value was accidentally staged.
+git diff --staged
+```
+
+Local `.env` files are ignored by `.gitignore`, but shell environment variables are preferred for this project. If a student does use a local `.env`, it must stay uncommitted.
+
 ## Failure Memory Structure
 
 `data/failure_kb.json` stores:

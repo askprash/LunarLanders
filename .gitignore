@@ -1,6 +1,11 @@
 # Scratch and research notes that should never be committed by default
 sandbox/
 
+# Local secrets / environment files
+.env
+.env.*
+!.env.example
+
 # OS / Python cache
 .DS_Store
 __pycache__/
